@@ -1,0 +1,440 @@
+CODEBOOK FOR PERSONAL NETWORKS
+
+
+
+Project contact person: Amar Dhand, adhand@bwh.harvard.edu
+
+
+
+Project description: This is R code to process data from REDCap form on personal networks for clinical research. It includes code to create a data table of network metrics and code to create visualizations. This is a supplement of forthcoming paper by Dhand et al. titled ÒA Scalable Online Tool for Quantitative Social Network Assessment Reveals Potentially Modifiable Social Environmental RisksÓ in Nature Communications. 
+
+
+
+Instrument: ÒPersonal network survey for clinical researchÓ is a form available in the REDCap Shared Library.
+
+
+
+
+Variable List
+
+
+
+Variable name: study_id
+
+Variable description: Study ID
+
+Variable type: Integer (Unique)
+
+
+
+Variable name: age
+
+Variable description: Age 
+
+Variable type: Integer 
+
+Missing data: Coded as Na
+
+
+
+Variable name: sex
+
+Variable description: Sex
+
+Variable type: Categorical variable
+
+Category values description: 0-Female, 1-Male, 2-Other
+
+Missing data: Coded as Na
+
+
+
+Variable name: race1
+
+Variable description: First race 
+
+Variable type: Categorical variable
+
+Category values description: 1- Black or African American, 2- White, 3-American Indian/ Alaska Native, 4- Asian, 5- Native Hawaiian or Other Pacific Islander, 77- Other, 88- Unknown
+
+Missing data: Coded as Na
+
+
+
+Variable name: race2
+
+Variable description: Second race
+
+Variable type: Categorical variable
+
+Category values description: 1- Black or African American, 2- White, 3-American Indian/ Alaska Native, 4- Asian, 5- Native Hawaiian or Other Pacific Islander, 77- Other, 88- Unknown
+
+Missing data: Coded as Na
+
+
+
+Variable name: edu
+
+Variable description: Education level
+
+Variable type: Categorical variable
+
+Category values description: 1- High school or less, 2- High school grad, 3- Some collage, 4- Associate degree, 5- BachelorÕs degree, 6- Graduate degree, 88- Prefer not to answer
+
+Missing data: Coded as Na
+
+
+
+Variable name: zip
+
+Variable description: Your ZIP code  
+
+Variable type: Integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: employment
+
+Variable description: Employment status 
+
+Variable type: Categorical variable
+
+Category values description: 1- Employed for wages, 2- Self-employed, 3-Out of work and looking for work, 0- out of work but not currently looking for work, 4- Student, 5- Retired, 6- Unable to work, 7- Prefer not to answer
+
+Missing data: Coded as Na
+
+
+
+Variable name: occupation
+
+Variable description: Current occupation  
+
+Variable type: Categorical variable
+
+Category values description: 1- Executive manager, 2-Sales or clerical worker, 3- Mechanic/electrician/skilled worker, 4- Machine operator/inspector/ bus or cap driver, 5- service worker (e.g. janitor/ guard), 6- Professional (e.g. nurse/lawyer/teacher or etc), 7- Business owner, 8- Labor / unskilled worker, 9- Farming, 10- Military, 11- Other
+
+Missing data: Coded as Na
+
+
+
+Variable name: income
+
+Variable description: What is your approximate household net worth?
+
+Variable type: Categorical variable
+
+Category values description: 1- Less than $5,000, 2- $5,000 to $49,000, 3- $50,000 to $169,000, 4- $170,000 to $499,000, 5- More than $500,000
+
+Missing data: Coded as Na
+
+
+
+Variable name: married
+
+Variable description: Marital status
+
+Variable type: Categorical variable
+
+Category values description: 0- Not Married, 1- Married
+
+Missing data: Coded as Na
+
+
+
+Variable name: live_alone
+
+Variable description: Do you live alone?
+
+Variable type: Categorical variable
+
+Category values description: 0- No, 1- yes
+
+Missing data: Coded as Na
+
+
+
+Variable name: household_number
+
+Variable description: Number of people in participantÕs house.
+Variable type: Integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: alcohol
+
+Variable description: Have you cut back on heavy drinking of alcohol in the past 3 months?
+
+Variable type: Categorical variable
+
+Category values description: 1- Yes, 0- No, 9- I donÕt drink heavily
+
+Missing data: Coded as Na
+
+
+
+Variable name: smoke
+
+Variable description: Have you cut back on smoking in the past 3 months?
+
+Variable type: Categorical variable
+
+Category values description: 1- Yes, 0- No, 9- I donÕt smoke
+
+Missing data: Coded as Na
+
+
+
+Variable name: exercise 
+
+Variable description: Have you exercised at least 3-4 times a week over the past 3 months?
+
+Variable type: Categorical variable
+
+Category values description: 1- Yes, 0- No
+
+Missing data: Coded as Na
+
+
+
+Variable name: healthy_diet 
+
+Variable description: Did you eat a healthy diet regularly over the past 3 months?
+
+Variable type: Categorical variable
+
+Category values description: 1- Yes, 0- No
+
+Missing data: Coded as Na
+
+
+
+Variable name: health_problem1
+
+Variable description: In which areas do you feel you experience more health problems than the average person? (Select all that apply)
+
+Variable type: Categorical variable
+
+Category values description: 1- General health, 2- Pain, 3- Cognitive/ Mental health, 4-Cardiac, 0- No health problems
+
+Missing data: Coded as Na
+
+
+
+Variable name: health_problem2
+
+Variable description: In which areas do you feel you experience more health problems than the average person? (Select all that apply)
+
+Variable type: Categorical variable
+
+Category values description: 1- General health, 2- Pain, 3- Cognitive/ Mental health, 4-Cardiac, 0- No health problems
+
+Missing data: Coded as Na
+
+
+
+Variable name: health_problem3
+
+Variable description: In which areas do you feel you experience more health problems than the average person? (Select all that apply)
+
+Variable type: Categorical variable
+
+Category values description: 1- General health, 2- Pain, 3- Cognitive/ Mental health, 4-Cardiac, 0- No health problems
+
+Missing data: Coded as Na
+
+
+
+Variable name: health_problem4
+
+Variable description: In which areas do you feel you experience more health problems than the average person? (Select all that apply)
+
+Variable type: Categorical variable
+
+Category values description: 1- General health, 2- Pain, 3- Cognitive/ Mental health, 4-Cardiac, 0- No health problems
+
+Missing data: Coded as Na
+
+
+
+Variable name: network_size
+
+Variable description: Total number of unique social contacts including those listed in the name generator and extra boxes.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: density
+
+Variable description: Ratio of the number of ties to all possible number of ties
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: constraint
+
+Variable description: Amount of close-knit, closed structure based on Burt (values range 0-125)
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: effsize
+
+Variable description: Effective size is the number of unique nodes other than the ego based on Burt.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: max_degree
+
+Variable description: Maximum degree of network member (most popular) excluding ego
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: mean_degree
+
+Variable description: Average degree of a network member excluding ego
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: kin_prop
+
+Variable description: Proportion of network members who are kin
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: age_sd
+
+Variable description: Standard deviation of network memberÕs age
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: IQVsex
+
+Variable description: Index of qualitative variation of sex, higher number meaning balance of men and women in network.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: IQVrace
+
+Variable description: Index of qualitative variation of race, higher number meaning balance of race in network
+.
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: weak_freq_prop
+
+Variable description: Proportion of network members who contact ego monthly or less often.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: weak_dur_prop
+
+Variable description: Proportion of network members who have known the ego for less than 6 years.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: far_dist_prop
+
+Variable description: Proportion of network members who live >15 miles away.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: drinking_prop
+
+Variable description: Proportion of network members who are not cutting down on heavy drinking
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: smoking_prop
+
+Variable description: Proportion of network members who smoke
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: no_exercise_prop
+
+Variable description: Proportion of network who do not exercise 3-4 times/week.
+
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: bad_diet_prop
+
+Variable description: Proportion of network who have an unhealthy diet.
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
+Variable name: health_prob_prop
+
+Variable description: Proportion of network who have general, pain, cognitive/mental health, or cardiac health problems.
+Variable type: integer
+
+Missing data: Coded as Na
+
+
+
