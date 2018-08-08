@@ -24,7 +24,7 @@ library(tidyverse)
 
 #Read in data
 #Imports data and assigns it to variable "sample_data"
-sample_data <- read.csv("20180806_PersonalNetwork_data.csv", 
+sample_data <- read.csv("20180807_PersonalNetwork_data.csv", 
 	stringsAsFactors = FALSE)
 #Stores "sample_data" as a table data frame for easier reading
 sample_data <- tbl_df(sample_data)
