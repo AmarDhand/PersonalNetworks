@@ -43,7 +43,7 @@ library(grid) # For montage of networks
 #  network
 
 #Imports data and assigns it to variable "dataset"
-dataset <- read.csv("20180806_PersonalNetwork_data.csv")
+dataset <- read.csv("20180807_PersonalNetwork_data.csv")
 
 #Function which makes a basic network matrix used by multiple functions
 make_base_mat <- function(x){
