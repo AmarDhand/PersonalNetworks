@@ -8,7 +8,7 @@ Contact information: Amar Dhand, adhand@bwh.harvard.edu
 
 File organization: Statistical code in 3 parts, example data, codebook, and README file all together in the main directory.
 
-File naming: Files names include data last saved, project name, and file type (20180806_PersonalNetworks_code1.R)
+File naming: Files names include data last saved, project name, code/series function, and file type (20180807_PersonalNetworks_cleandata1_code.R)
 
 File storage location: The files are all stored in the project repository at https://github.com/AmarDhand/PersonalNetworks
 
