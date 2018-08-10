@@ -21,7 +21,7 @@
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
+setwd("~/Desktop/PersonalNetworks")
 
 #Detatches all packages from current iteration of R, most packages interfere with this code
 detach_all_packages <- function() {
@@ -37,7 +37,7 @@ detach_all_packages <- function() {
                                                   search())) == 1, TRUE, FALSE)]
   package.list <- setdiff(package.list, basic.packages)
   if (length(package.list) > 0)  for (package in package.list) detach(package,
-                                                                    character.only = TRUE)
+      character.only = TRUE)
 }
 detach_all_packages()
 
