@@ -165,7 +165,7 @@ z <- array(1:length(unique(master.pre$study_id)))
 age <- master.pre %>% select(study_id, name1age:name15age) %>% 
   group_by(study_id) %>% slice(1)
 #Calculate age SD
-age_sd <- apply(age[,-1], 1, sd, na.rm = TRUE) 
+age_sd <- apply(age[, -1], 1, sd, na.rm = TRUE) 
 
 #Sex IQV--Two versions here just to use for later code.
 sex <- master.pre %>% select(study_id, name1sex:name15sex) %>% 
@@ -184,7 +184,7 @@ sex_diversity <- function(x) {
   a <- sum(!is.na(sex1[x, 2:16])) #total number of alters
   b <- sum(sex1[x, 2:16], na.rm = TRUE) #number of men
   c <- a-b #number of women
-  d <- (1 - ((b / a)^2 + (c / a)^2))/(1 - (1 / 2)) 
+  d <- (1 - ((b / a)^2 + (c / a)^2)) / (1 - (1 / 2)) 
   return (d)
 }
 
@@ -220,7 +220,7 @@ race_diversity <- function(x) {
   e <- sum(race[x, 2:11] == 4, na.rm = TRUE)  #number of asians
   f <- sum(race[x, 2:11] == 5, na.rm = TRUE)  #number of native hawaiian/
   #                                                       other pacific islanders
-  d <- (1 - ((b / a)^2 + (c / a)^2 + (d / a)^2 + (e / a)^2 + (f / a)^2))/(1 - (1 / 5))
+  d <- (1 - ((b / a)^2 + (c / a)^2 + (d / a)^2 + (e / a)^2 + (f / a)^2)) / (1 - (1 / 5))
   return(d)
 }
 
@@ -251,7 +251,7 @@ weak <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion of weak ties based on frequency of contact for each Study ID
   ##########  
-  ifelse(freq[x,-1]>2, 1, 0)
+  ifelse(freq[x, -1] > 2, 1, 0)
   } 
 
 #Create a df with only frequency of contact columns for all rows
@@ -317,7 +317,7 @@ far <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion alters who live further than 15 miles away for each Study ID
   ##########  
-  ifelse(dist[x, - 1] < 3, 1, 0)
+  ifelse(dist[x, -1] < 3, 1, 0)
   }
 
 #Create a df with only distance columns for all rows
@@ -392,7 +392,7 @@ smokers_df <- smokers(z)
 #Collapse by summing total number of alters who have not cut back on smoking
 smoking <- apply(smokers_df, 1, sum, na.rm = TRUE)
 #Proportion of those who have not cut down on smoking
-smoking_prop <- smoking/tot_cells
+smoking_prop <- smoking / tot_cells
 
 #Heavy Alcohol
 alcohol_all <- master.pre %>% select(study_id, name1alcohol:name15alcohol) %>%
@@ -416,7 +416,7 @@ drinkers_df <- drinkers(z)
 #Collapse by summing total number of alters who have not cut down on heavy drinking
 drinking <- apply(drinkers_df, 1, sum, na.rm = TRUE)
 #Proportion of total number of alters who have not cut down on heavy drinking
-drinking_prop <- drinking/tot_cells
+drinking_prop <- drinking / tot_cells
 
 #No exercise
 exercise_all <- master.pre %>% select(study_id, name1exer:name15exer) %>%
@@ -441,7 +441,7 @@ no_exercisers_df <- no_exercisers(z)
 #Collapse by summing total number of alters who do not exercise 3-4 times per week 
 no_exercise <- apply(no_exercisers_df, 1, sum, na.rm = TRUE)
 #Proportion of alters who do not exercise 3-4 times per week
-no_exercise_prop <- no_exercise/tot_cells
+no_exercise_prop <- no_exercise / tot_cells
 
 #Bad diet: 
 diet_all <- master.pre %>% select(study_id, name1diet:name15diet) %>%
@@ -464,7 +464,7 @@ bad_diet_df <- bad_diet(z)
 #Collapse by summing total number of alters who have a bad diet
 bad_diet <- apply(bad_diet_df, 1, sum, na.rm = TRUE)
 #Proprotion of alters who have a bad diet
-bad_diet_prop <- bad_diet/tot_cells
+bad_diet_prop <- bad_diet / tot_cells
 
 #Health problems: 
 health_all <- master.pre %>% 
@@ -516,7 +516,7 @@ final_table <- master %>% select(
 	alcohol, smoke, exercise, healthy_diet = diet, 
 	health_problem1:health_problem4,
 	#structure network variables
-	network_size, density, constraint=constraintInt, effsize, max_degree, 
+	network_size, density, constraint = constraintInt, effsize, max_degree, 
 	mean_degree, 
 	#composition network variables
 	kin_prop, age_sd, IQVsex, IQVrace, weak_freq_prop, weak_dur_prop, 

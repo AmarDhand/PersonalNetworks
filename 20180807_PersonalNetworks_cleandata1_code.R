@@ -83,29 +83,29 @@ levels(sample_data$live_alone) <- c("No", "Yes")
 #  into race1 and race2. If the participant only chooses 1 race, the value for 
 #  "race2" will be NA
 r <- sample_data %>% select(study_id, race___1:race___88)
-colnames(r) <- c("study_id", "Black","White","American_Indian","Asian",
-	"Hawaiian","Other","Unknown")
+colnames(r) <- c("study_id", "Black", "White", "American_Indian", "Asian",
+	"Hawaiian", "Other", "Unknown")
 #creates variable, "race1", that contains the first race a participant chooses
 #  if the participant selects multiple races, then "race1" variable represents
 #  the race that appears first in the list of choices, and does NOT denote any 
 #  ordering assigned by the participant 
-race1 <- r %>% gather(race, count, -study_id) %>% filter(count==1) %>% 
+race1 <- r %>% gather(race, count, -study_id) %>% filter(count == 1) %>% 
 	arrange(study_id) %>% select(-count) %>% group_by(study_id) %>% slice(1) %>% 
 	data.frame()
 #creates variable, "race2", that contains the second race a participant chooses
 #  if the participant selects multiple races, then "race2" variable represents
 #  the race that appears second in the list of choices, and does NOT denote any 
 #  ordering assigned by the participant 
-race2 <- r %>% gather(race, count, -study_id) %>% filter(count==1) %>% 
+race2 <- r %>% gather(race, count, -study_id) %>% filter(count == 1) %>% 
 	arrange(study_id) %>% select(-count) %>% group_by(study_id) %>% slice(2) %>% 
 	data.frame()
 
 #creates a table that combines "race1" and "race2" by study_id
-race <- left_join(race1, race2, by='study_id')
+race <- left_join(race1, race2, by = 'study_id')
 colnames(race) <- c("study_id", "race1", "race2")
 #adds "race" table onto "sample_data", thus adding variables "race1" and "race2"
 #  to the original data frame, containing all variables
-sample_data <- left_join(sample_data, race, by="study_id") %>% 
+sample_data <- left_join(sample_data, race, by = "study_id") %>% 
 	select(-race___1:-race___88)
 
 #Ego health habits: 
@@ -131,7 +131,7 @@ levels(sample_data$diet) <- c("No", "Yes")
 #same code as for "race" variable
 h <- sample_data %>% select(study_id, health___1:health___0)
 colnames(h) <- c("study_id", "General", "Pain", "Cognitive_MentalHealth",
-	"Cardiac","NoProblems")
+	"Cardiac", "NoProblems")
 #creates variable, "health_prob1", that contains the first health problem a 
 #  participant chooses if the participant selects multiple health problems, 
 #  then "health_prob1" variable represents the health problem that appears first
@@ -140,29 +140,29 @@ colnames(h) <- c("study_id", "General", "Pain", "Cognitive_MentalHealth",
 #The same code is then used to create variables for any second, third, or fourth
 #  health problems the participant chooses.
 health_prob1 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count==1) %>% arrange(study_id) %>% select(-count) %>% 
+	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
 	group_by(study_id) %>% slice(1) %>% data.frame()
 health_prob2 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count==1) %>% arrange(study_id) %>% select(-count) %>% 
+	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
 	group_by(study_id) %>% slice(2) %>% data.frame()
 health_prob3 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count==1) %>% arrange(study_id) %>% select(-count) %>% 
+	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
 	group_by(study_id) %>% slice(3) %>% data.frame()
 health_prob4 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count==1) %>% arrange(study_id) %>% select(-count) %>% 
+	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
 	group_by(study_id) %>% slice(4) %>% data.frame()
-health_problems <- left_join(health_prob1, health_prob2, by='study_id')
-health_problems <- left_join(health_problems, health_prob3, by='study_id')
-health_problems <- left_join(health_problems, health_prob4, by='study_id')
+health_problems <- left_join(health_prob1, health_prob2, by = 'study_id')
+health_problems <- left_join(health_problems, health_prob3, by = 'study_id')
+health_problems <- left_join(health_problems, health_prob4, by = 'study_id')
 colnames(health_problems) <- c("study_id", "health_problem1", "health_problem2",
 	"health_problem3", "health_problem4")
-sample_data <- left_join(sample_data, health_problems, by="study_id") %>% 
+sample_data <- left_join(sample_data, health_problems, by = "study_id") %>% 
 	select(-health___1:-health___0)
 
 ##Calculate total network size. Defined as all unique names entered in name
 #generator boxes and extra boxes provided.
 sample_data.df <- data.frame(sample_data) 
-datalist=list()
+datalist = list()
 
 calculate_size <- function(x) {
 ##########
@@ -196,7 +196,7 @@ colnames(keep_names) <- c(1:15)
 keep_names <- data.frame(t(keep_names))
 
 #change the name of the column to "Value"
-colnames(keep_names)="Value"
+colnames(keep_names) = "Value"
 
 #combine "names_first_15" (the first 15 names entered) and "keep_names" (the 
 #  keep/remove designation for each of the first 15 names) using cbind function
@@ -207,7 +207,7 @@ names_combined <- names_combined[complete.cases(names_combined), ]
 
 #split names_combined into names designated as "keep" (Value = 1) and 
 #  names designated as "remove" (Value = 0)
-names_combined_keep <- split(names_combined, names_combined$Value==1)
+names_combined_keep <- split(names_combined, names_combined$Value == 1)
 
 # Select only the names designated as $`TRUE` ("keep")
 names_combined_keep <- names_combined_keep$`TRUE`
@@ -234,9 +234,9 @@ names_box3 <- strsplit(as.character(sample_data$more_names_3)[x],
 
 #Unlist names_box1:names_box3 and create a vector of names for each extra names 
 #  box
-names_box1 <- as.vector(unlist(names_box1, use.names=FALSE))
-names_box2 <- as.vector(unlist(names_box2, use.names=FALSE))
-names_box3 <- as.vector(unlist(names_box3, use.names=FALSE))
+names_box1 <- as.vector(unlist(names_box1, use.names = FALSE))
+names_box2 <- as.vector(unlist(names_box2, use.names = FALSE))
+names_box3 <- as.vector(unlist(names_box3, use.names = FALSE))
 
 #combine the 3 extra names vectors into list so that we can combine 
 #  names_box1:3 into one vector
@@ -266,7 +266,7 @@ colnames(names_box) <- "Names"
 #remove duplicates between them 
 #  Keep this order. Placing names_combined_keep first preserves any duplicate 
 #  names that both designated as "keep" by the participant 
-names_network <- merge(names_combined_keep,names_box,by=c("Names"), all = TRUE)
+names_network <- merge(names_combined_keep,names_box,by = c("Names"), all = TRUE)
 
 # convert names_network into a vector
 names_network <- as.vector(t(names_network))
@@ -283,4 +283,4 @@ network_size <- unlist(lapply(1:nrow(sample_data), calculate_size))
 sample_data <- cbind(sample_data, network_size) %>% select(-size, -first)
 
 #create temp file of data frame with all changes made in code
-save(sample_data, file="temp.rda")
+save(sample_data, file = "temp.rda")

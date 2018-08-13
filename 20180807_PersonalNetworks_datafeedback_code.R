@@ -24,7 +24,7 @@ rm(list=ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
+setwd("~/Desktop/PersonalNetworks")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #Tools -> Install Packages, then enter their exact names from within each 
@@ -304,7 +304,7 @@ make_table <- function(x) {
   #Creates a network matrix from input dataset file
   mat <- make_base_mat(x)
   
-  #Calculate Network size 
+  #Calculate Network size
   names_fill <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
                              name9, name10, name11, name12, name13, name14, name15)
   names_box1 <- strsplit(as.character(x$more_names_1), split = ",")
@@ -317,8 +317,10 @@ make_table <- function(x) {
   names_box3 <- as.vector(unlist(names_box3, use.names = FALSE))
   
   names_total <- c(names_fill, names_box1, names_box2, names_box3)
-  size <-  length(unique(toupper(trimws(names_total))))
+  names_total <- unique(toupper(trimws(names_total)))
+  names_total <- names_total[names_total != ""] 
   
+  size <- length(names_total)
   size <- paste(size, "People")
   
   #Calculate Density
@@ -343,27 +345,22 @@ make_table <- function(x) {
   alcohol$sum  <- length(which(alcohol == 0))
   alcohol_prop <- percent(alcohol$sum / (nrow(mat) - 1))
   
-  # % of people who are supportive
-  supp <- x %>% select(name1support:name15support) 
-  supp$sum  <- length(which(supp == 1 | supp == 0))
-  supp_prop <- percent(supp$sum / (nrow(mat) - 1))
-  
-  # % of ties who exericse 
+  # % of ties who don't exericse 
   exer <- x %>% select(name1exer:name15exer) 
-  exer$sum  <- length(which(exer == 1))
+  exer$sum  <- length(which(exer == 0))
   exer_prop <- percent(exer$sum / (nrow(mat) - 1))
   
-  # % of ties who eat a healthy diet 
+  # % of ties who don't eat a healthy diet 
   diet <- x %>% select(name1diet:name15diet) 
-  diet$sum  <- length(which(diet == 1))
+  diet$sum  <- length(which(diet == 0))
   diet_prop <- percent(diet$sum / (nrow(mat) - 1))
   
   # % of ties with health conditions 
-  health  <- x %>% select(name1health___1:name1health___99) 
-  health1 <- health[, grepl("___1", names(health))]
-  health2 <- health[, grepl("___2", names(health))]
-  health3 <- health[, grepl("___3", names(health))]
-  health4 <- health[, grepl("___4", names(health))]
+  health  <- x %>% select(name1health___1:name15health___99) 
+  health1 <- health[, grepl("health___1", names(health))]
+  health2 <- health[, grepl("health___2", names(health))]
+  health3 <- health[, grepl("health___3", names(health))]
+  health4 <- health[, grepl("health___4", names(health))]
   health  <- cbind(health1, health2)
   health  <- cbind(health,  health3)
   health  <- cbind(health,  health4)
@@ -372,14 +369,14 @@ make_table <- function(x) {
   
   #Format all percents into a table
   table <- data.frame(size, density, kin_prop, diet_prop, exer_prop, alcohol_prop,
-                      supp_prop, healthprob_prop)
+                      healthprob_prop)
   #Transposes dataframe to verticle orientation
   table <- t(table)
   #Names each row of the data table
   rownames(table) <- c("Size of your network", "Density of ties in your network",
-                       "Percent who are family", "Percent who eat a healthy diet", 
-                       "Percent who exercise regularly", "Percent who heavily drink alcohol", 
-                       "Percent who are supportive", 
+                       "Percent who are family", "Percent who don't eat a healthy diet", 
+                       "Percent who don't exercise regularly",
+                       "Percent who heavily drink alcohol",
                        "Percent who have health problems")
   #Eliminates names of the table columns
   colnames(table) <- ""
