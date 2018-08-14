@@ -13,7 +13,7 @@
 #					 study_id's.
 # AUTHOR:  Liam McCafferty, Meghan Hutch, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 06/08/18
-# LATEST:  08/07/18
+# LATEST:  08/14/18
 # NOTES:   Code works on raw .csv outputs from REDCap, no processing required.
 # ##############################################################################
 
@@ -24,7 +24,7 @@ rm(list=ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks")
+setwd("~/Dropbox (Partners HealthCare)/R analysis/PersonalNetworks")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #Tools -> Install Packages, then enter their exact names from within each 
@@ -32,12 +32,12 @@ setwd("~/Desktop/PersonalNetworks")
 library(tidyverse) # For data management
 library(igraph) # To transform and analyze network data
 library(ggnetwork) # To make good-looking network graphs
-library(intergraph) # May need this package
-library('scales') # To add percentages
+library(scales) # To add percentages
 library(gridExtra) # For montage of networks
 library(grid) # For montage of networks
 #Although not supposed to load here, the functions below auto-loads the 
 #following. If not already, make sure to install these packages as well.
+#  egonet
 #  sna
 #  statnet.common
 #  network

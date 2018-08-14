@@ -21,7 +21,7 @@
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks")
+setwd("~/Dropbox (Partners HealthCare)/R analysis/PersonalNetworks")
 
 #Detatches all packages from current iteration of R, most packages interfere with this code
 detach_all_packages <- function() {
@@ -49,6 +49,12 @@ rm(list = ls())
 #library()
 library(tidyverse) # For data management
 library(igraph) # To transform and analyze network data
+#Although not supposed to load here, the functions below auto-loads the 
+#following. If not already, make sure to install these packages as well.
+#  egonet
+#  sna
+#  statnet.common
+#  network
 
 #Load temp file created from 2nd part of code
 load("temp.rda")

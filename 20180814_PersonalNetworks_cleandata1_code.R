@@ -7,7 +7,7 @@
 # OUTPUTS: A temp.rda file that will become the input for part 3 of the code 
 # AUTHORS: Abby Halm, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 08/01/18
-# LATEST:  08/07/18
+# LATEST:  08/14/18
 # PSERIES: NA
 # NSERIES: 20180807_PersonalNetworks_cleandata2_code.R
 # NOTES:   Step 1 of 2 parts of the code. 
@@ -21,7 +21,7 @@ rm(list = ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks")
+setwd("~/Dropbox (Partners HealthCare)/R analysis/PersonalNetworks")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #  Tools -> Install Packages, then enter their exact names from within each library()
