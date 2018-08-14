@@ -13,7 +13,7 @@
 #					 study_id's.
 # AUTHOR:  Liam McCafferty, Meghan Hutch, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 06/08/18
-# LATEST:  08/07/18
+# LATEST:  08/14/18
 # NOTES:   Code works on raw .csv outputs from REDCap, no processing required.
 # ##############################################################################
 
@@ -24,7 +24,7 @@ rm(list=ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks")
+setwd("~/Dropbox (Partners HealthCare)/R analysis/PersonalNetworks")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #Tools -> Install Packages, then enter their exact names from within each 
@@ -32,12 +32,12 @@ setwd("~/Desktop/PersonalNetworks")
 library(tidyverse) # For data management
 library(igraph) # To transform and analyze network data
 library(ggnetwork) # To make good-looking network graphs
-library(intergraph) # May need this package
-library('scales') # To add percentages
+library(scales) # To add percentages
 library(gridExtra) # For montage of networks
 library(grid) # For montage of networks
 #Although not supposed to load here, the functions below auto-loads the 
 #following. If not already, make sure to install these packages as well.
+#  egonet
 #  sna
 #  statnet.common
 #  network
@@ -289,6 +289,111 @@ make_image <- function(x) {
   }
 }
 
+#Function to Make Social Network Table
+make_table <- function(x) {
+  ##########
+  # Function: Creates and outputs a graphical data table which contains importatnt stats
+  # Inputs: x = input dataset with 1 row
+  # Ouputs: table, a single graphical table which contains health stats from dataset
+  ##########
+  
+  
+  #transform data to dataframe-table
+  x <- tbl_df(x)
+  
+  #Creates a network matrix from input dataset file
+  mat <- make_base_mat(x)
+  
+  #Calculate Network size
+  names_fill <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
+                             name9, name10, name11, name12, name13, name14, name15)
+  names_box1 <- strsplit(as.character(x$more_names_1), split = ",")
+  names_box2 <- strsplit(as.character(x$more_names_2), split = ",")
+  names_box3 <- strsplit(as.character(x$more_names_3), split = ",")
+  
+  names_fill <- as.vector(unlist(names_fill, use.names = FALSE))
+  names_box1 <- as.vector(unlist(names_box1, use.names = FALSE))
+  names_box2 <- as.vector(unlist(names_box2, use.names = FALSE))
+  names_box3 <- as.vector(unlist(names_box3, use.names = FALSE))
+  
+  names_total <- c(names_fill, names_box1, names_box2, names_box3)
+  names_total <- unique(toupper(trimws(names_total)))
+  names_total <- names_total[names_total != ""] 
+  
+  size <- length(names_total)
+  size <- paste(size, "People")
+  
+  #Calculate Density
+  Density_1 <- graph.density(graph.adjacency(mat[-1, -1], mode = "undirected",
+                                             weighted = TRUE))
+  density <- percent(Density_1)
+  
+  # % Kin 
+  kin  <- x %>% select(name1relat___1:name15relat___77) 
+  # relat1 and relat2 represent kin
+  kin1 <- kin[, grepl( "___1", names(kin))]
+  kin2 <- kin[, grepl( "___2", names(kin))]
+  # Bind kin together
+  kin  <- cbind(kin1, kin2)
+  # Collapse by summing all kin rows into a number
+  kin_num  <- apply(kin, 1, sum, na.rm = TRUE)
+  # Calculate a proportion of kin
+  kin_prop <- percent(kin_num / (nrow(mat) - 1))
+  
+  # % of ties who heavily drink alcohol 
+  alcohol <- x %>% select(name1alcohol:name15alcohol) 
+  alcohol$sum  <- length(which(alcohol == 0))
+  alcohol_prop <- percent(alcohol$sum / (nrow(mat) - 1))
+  
+  # % of ties who don't exericse 
+  exer <- x %>% select(name1exer:name15exer) 
+  exer$sum  <- length(which(exer == 0))
+  exer_prop <- percent(exer$sum / (nrow(mat) - 1))
+  
+  # % of ties who don't eat a healthy diet 
+  diet <- x %>% select(name1diet:name15diet) 
+  diet$sum  <- length(which(diet == 0))
+  diet_prop <- percent(diet$sum / (nrow(mat) - 1))
+  
+  # % of ties with health conditions 
+  health  <- x %>% select(name1health___1:name15health___99) 
+  health1 <- health[, grepl("health___1", names(health))]
+  health2 <- health[, grepl("health___2", names(health))]
+  health3 <- health[, grepl("health___3", names(health))]
+  health4 <- health[, grepl("health___4", names(health))]
+  health  <- cbind(health1, health2)
+  health  <- cbind(health,  health3)
+  health  <- cbind(health,  health4)
+  health  <- apply(health,  1, sum, na.rm=TRUE)
+  healthprob_prop <- percent(health / (nrow(mat) - 1))
+  
+  #Format all percents into a table
+  table <- data.frame(size, density, kin_prop, diet_prop, exer_prop, alcohol_prop,
+                      healthprob_prop)
+  #Transposes dataframe to verticle orientation
+  table <- t(table)
+  #Names each row of the data table
+  rownames(table) <- c("Size of your network", "Density of ties in your network",
+                       "Percent who are family", "Percent who don't eat a healthy diet", 
+                       "Percent who don't exercise regularly",
+                       "Percent who heavily drink alcohol",
+                       "Percent who have health problems")
+  #Eliminates names of the table columns
+  colnames(table) <- ""
+  #Prints the table
+  table <- print(table, quote = FALSE)
+  #Table formattting
+  table <- data.frame('Social Network Characteristics' = row.names(table), table)
+  table <- as.data.frame(table)
+  table <- table %>% select(Social.Network.Characteristics, V1)
+  #Table labeling
+  colnames(table) <- c("Social Network Characteristics", "Your Network")
+  
+  return(table)
+  
+} 
+
+
 #Creates a series of pdf documents containing the network graph
 for(i in c(1:nrow(dataset))){
   #Isolates a single row from the dataset into variable input. Used in many fxns
@@ -305,6 +410,10 @@ for(i in c(1:nrow(dataset))){
   									sep = "")), width = 11, height = 7)
   #Creates a network graph and draws it onto the pdf
   grid.draw(make_image(input))
+  #Makes a new page in pdf
+  grid.newpage(recording = TRUE)
+  #Creates the data table from input
+  grid.table(make_table(input), rows = NULL)
   #Closes pdf file
   dev.off()
 }
