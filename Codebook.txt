@@ -392,7 +392,7 @@ Missing data: Coded as Na
 
 Variable name: drinking_prop
 
-Variable description: Proportion of network members who are not cutting down on heavy drinking
+Variable description: Proportion of network members who are heavy drinkers. Proportion consists of "yes" and "no" answers. Proportion does not include "does not drink" and "unknown" answers.
 
 Variable type: integer
 
@@ -402,7 +402,7 @@ Missing data: Coded as Na
 
 Variable name: smoking_prop
 
-Variable description: Proportion of network members who smoke
+Variable description: Proportion of network members who smoke. Proportion consists of "yes" and "no" answers. Proportion does not include "does not smoke" and "unknown" answers.
 
 Variable type: integer
 

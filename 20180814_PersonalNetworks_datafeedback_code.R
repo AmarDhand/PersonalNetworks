@@ -24,7 +24,7 @@ rm(list=ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Dropbox (Partners HealthCare)/R analysis/PersonalNetworks")
+setwd("~/Desktop/PersonalNetworks-master")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #Tools -> Install Packages, then enter their exact names from within each 
@@ -342,7 +342,7 @@ make_table <- function(x) {
   
   # % of ties who heavily drink alcohol 
   alcohol <- x %>% select(name1alcohol:name15alcohol) 
-  alcohol$sum  <- length(which(alcohol == 0))
+  alcohol$sum  <- length(which(alcohol == 0 | alcohol == 1))
   alcohol_prop <- percent(alcohol$sum / (nrow(mat) - 1))
   
   # % of ties who don't exericse 
@@ -364,7 +364,7 @@ make_table <- function(x) {
   health  <- cbind(health1, health2)
   health  <- cbind(health,  health3)
   health  <- cbind(health,  health4)
-  health  <- apply(health,  1, sum, na.rm=TRUE)
+  health  <- apply(health,  1, sum, na.rm = TRUE)
   healthprob_prop <- percent(health / (nrow(mat) - 1))
   
   #Format all percents into a table

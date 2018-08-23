@@ -21,7 +21,7 @@
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Dropbox (Partners HealthCare)/R analysis/PersonalNetworks")
+setwd("~/Desktop/PersonalNetworks-master")
 
 #Detatches all packages from current iteration of R, most packages interfere with this code
 detach_all_packages <- function() {
@@ -29,6 +29,7 @@ detach_all_packages <- function() {
   # Function: Detatches all attatched packages from current instance of R
   # Inputs: none, just call the function
   # Ouputs: none
+  # Credit to mjaniec on stack overflow for function logic
   ##########  
   basic.packages <- c("package:stats", "package:graphics", "package:grDevices",
                       "package:utils", "package:datasets",
@@ -380,9 +381,7 @@ master.pre <- left_join(master.pre, df, by = c("study_id"))
 smoking_all <- master.pre %>% select(study_id, name1smoke:name15smoke) %>%
   group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
 
-#Isolating 0=Not cut down on smoking
-
-
+#Isolating 0 = Not cut down on smoking and 1 = Cut down on smoking
 smokers <- function(x){
   ##########
   # Function: Calculates proportion of alters who have not cut down on smoking
@@ -390,7 +389,12 @@ smokers <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion of alters who have not cut down on smoking
   ##########  
-  ifelse(smoking_all[x, ] == 0, 1, 0)
+  
+  #First value is what is checked, second value is what the checked value is replaced with,
+  #  third value is what the non-matching values are replaced with.
+  yes_answers <- ifelse(smoking_all[x, ] == 1, 1, 0)
+  no_answers <- ifelse(smoking_all[x, ] == 0, 1, 0)
+  return(no_answers + yes_answers)
   } 
 
 #Create a df with only smoking columns for all rows
@@ -404,9 +408,7 @@ smoking_prop <- smoking / tot_cells
 alcohol_all <- master.pre %>% select(study_id, name1alcohol:name15alcohol) %>%
   group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
 
-#Isolating 0=Not cut down on heavy drinking
-
-
+#Isolating 0 = Not cut down on heavy drinking, 1 = cut down on heavy drinking
 drinkers <- function(x){
   ##########
   # Function: Calculates proportion of alters who have not cut down on heavy 
@@ -414,7 +416,12 @@ drinkers <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion of alters who have not cut down on heavy drinking
   ##########
-  ifelse(alcohol_all[x, ] == 0, 1, 0)
+  
+  #First value is what is checked, second value is what the checked value is replaced with,
+  #  third value is what the non-matching values are replaced with.
+  yes_answers <- ifelse(alcohol_all[x, ] == 1, 1, 0)
+  no_answers <- ifelse(alcohol_all[x, ] == 0, 1, 0)
+  return(no_answers + yes_answers)
   }
 
 #Create a df with only alcohol columns for all rows
