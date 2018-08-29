@@ -355,17 +355,23 @@ make_table <- function(x) {
   diet$sum  <- length(which(diet == 0))
   diet_prop <- percent(diet$sum / (nrow(mat) - 1))
   
-  # % of ties with health conditions 
-  health  <- x %>% select(name1health___1:name15health___99) 
-  health1 <- health[, grepl("health___1", names(health))]
-  health2 <- health[, grepl("health___2", names(health))]
-  health3 <- health[, grepl("health___3", names(health))]
-  health4 <- health[, grepl("health___4", names(health))]
-  health  <- cbind(health1, health2)
-  health  <- cbind(health,  health3)
-  health  <- cbind(health,  health4)
-  health  <- apply(health,  1, sum, na.rm = TRUE)
-  healthprob_prop <- percent(health / (nrow(mat) - 1))
+  #%of ties with health conditions 
+  health  <- x %>% select(name1health___1:name15health___99)
+  #Removes answers of no health problems and unknown
+  health <- health[, !grepl("___99", names(health))]
+  health <- health[, !grepl("___0", names(health))]
+  #Creates vectors which help filter for each person and can record the sum of their health.
+  health_names <- c("e1he", "e2he", "e3he", "e4he", "e5he", "e6he", "e7he", "e8he",
+                    "e9he", "e10he", "e11he", "e12he", "e13he", "e14he", "e15he")
+  health_count <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+  #Takes the entries per tie and checks if they have a 1, adds the TRUE/FALSE into the 
+  for(i in 1:length(health_names)){
+    health_count[i] <- any(health[, grepl(health_names[i], names(health))])
+  }
+  #Calculates the percentage from the sum the number people who have health problems
+  health <- sum(health_count)
+  healthprob_prop <- percent(health/(nrow(mat) - 1))
+
   
   #Format all percents into a table
   table <- data.frame(size, density, kin_prop, diet_prop, exer_prop, alcohol_prop,
