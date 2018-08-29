@@ -416,9 +416,6 @@ drinkers <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion of alters who have not cut down on heavy drinking
   ##########
-  
-  #First value is what is checked, second value is what the checked value is replaced with,
-  #  third value is what the non-matching values are replaced with.
   yes_answers <- ifelse(alcohol_all[x, ] == 1, 1, 0)
   no_answers <- ifelse(alcohol_all[x, ] == 0, 1, 0)
   return(no_answers + yes_answers)
@@ -485,9 +482,10 @@ health_all <- master.pre %>%
 	group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
 
 #Isolating those who have health problems ("___1", "___2","___3",or "___4")
+#  Health_all[1, !not] identifies all columns except ___0 and ___99
 not <- grepl("___0", names(health_all))|grepl("___99", names(health_all))
-#Health_all[1, !not] identifies all columns except ___0 and ___99
-
+#Creates a blank vector to store the number of ties with health problems
+health_prob_num <- c()
 
 health_prob <- function(x){
   ##########
@@ -500,9 +498,28 @@ health_prob <- function(x){
   }
 
 #Create a df with only health problem columns for all rows
-health_prob_df <- health_prob(z)
-#Collapse by summing all alters with health problems into a number
-health_prob_num <- apply(health_prob_df, 1, sum, na.rm = TRUE)
+health_prob_df <- as.data.frame(t(health_prob(z)))
+#Creates a new variable ties to sort each health problem by its associated tie
+health_prob_df$ties <- read.fwf(textConnection(rownames(health_prob_df)),
+                                widths = 11)
+
+checker <- function(x){
+  ##########
+  # Function: Checks a vector of integers to see if it contains any 1's, does not
+  #   return warnings like the any() fucntion normally does
+  # Inputs: x = vector of integers
+  # Ouputs: logical, TRUE or FALSE
+  ##########  
+  ifelse(any(x %in% 1), TRUE, FALSE)
+}
+for(i in 1:(length(health_prob_df) - 1)){
+  #This for loop goes through each survey and checks to see if each tie has a health
+  #  problem. The loop uses the by() function's factor system to organise each set
+  #  of health problems by their previosly assigned tie identifier. Then it runs
+  #  the created checker function.
+  health_prob_num[i] <- sum(by(health_prob_df[, i],
+                               health_prob_df$ties, checker) * 1)
+}
 #Proportion of alters with health problems
 health_prob_prop <- health_prob_num / tot_cells
 
