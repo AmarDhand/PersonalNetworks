@@ -277,6 +277,17 @@ master.pre <- left_join(master.pre, df, by = c("study_id"))
 #Clean, remove unnecessary variables
 rm(list = setdiff(ls(), c("master.pre", "z", "tot_cells")))
 
+#checker fucntion used in multiple proportions
+checker <- function(x){
+  ##########
+  # Function: Checks a vector of integers to see if it contains any 1's, does not
+  #   return warnings like the any() fucntion normally does
+  # Inputs: x = vector of integers
+  # Ouputs: logical, TRUE or FALSE
+  ##########  
+  ifelse(any(x %in% 1), TRUE, FALSE)
+}
+
 #Contact duration
 #This variable is for number of years of contact. 
 #It's another way to describe the links. Later, one can substitute this into the 
@@ -352,12 +363,25 @@ kin <- function(x){
   ifelse(roles[x, spouse_family] == 1, 1, 0)
   }
 
-#Create a df with only kin columns for all rows
-kin_df <- kin(z)
-#Collapse by summing all kin rows into a number
-kin_num <- apply(kin_df, 1, sum, na.rm = TRUE) #checks out correctly in RedCap
+#Creates a blank vector to store the number of ties with family members
+kin_prob_num <- c()
+
+kin_df <- as.data.frame(t(kin(z)))
+#Creates a new variable ties to sort each family member by its associated tie
+kin_df$ties <- read.fwf(textConnection(rownames(kin_df)),
+                                widths = 11)
+
+for(i in 1:(length(kin_df) - 1)){
+  #This for loop goes through each survey and checks to see if each tie has a family
+  #  member. The loop uses the by() function's factor system to organise each set
+  #  of family members by their previosly assigned tie identifier. Then it runs
+  #  the created checker function.
+  kin_prob_num[i] <- sum(by(kin_df[, i],
+                               kin_df$ties, checker) * 1)
+}
+
 #Calculate proportion of kin 
-kin_prop <- kin_num / tot_cells
+kin_prop <- kin_prob_num / tot_cells
 
 #Proportion of negative ties
 negative_all <- master.pre %>% select(study_id, name1neg:name15neg) %>%
@@ -503,15 +527,6 @@ health_prob_df <- as.data.frame(t(health_prob(z)))
 health_prob_df$ties <- read.fwf(textConnection(rownames(health_prob_df)),
                                 widths = 11)
 
-checker <- function(x){
-  ##########
-  # Function: Checks a vector of integers to see if it contains any 1's, does not
-  #   return warnings like the any() fucntion normally does
-  # Inputs: x = vector of integers
-  # Ouputs: logical, TRUE or FALSE
-  ##########  
-  ifelse(any(x %in% 1), TRUE, FALSE)
-}
 for(i in 1:(length(health_prob_df) - 1)){
   #This for loop goes through each survey and checks to see if each tie has a health
   #  problem. The loop uses the by() function's factor system to organise each set

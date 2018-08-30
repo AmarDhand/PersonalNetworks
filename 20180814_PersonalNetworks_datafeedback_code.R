@@ -304,6 +304,38 @@ make_table <- function(x) {
   #Creates a network matrix from input dataset file
   mat <- make_base_mat(x)
   
+  #Function used to find proportions of checkboxes
+  checkbox_prop_maker <- function(prop_check){
+    ##########
+    # Function: Takes a selected set of variables from a REDCap checkbox and finds the
+    #   proportion of them (in relation to the total tie count) which are 1.
+    # Inputs: prop_check = set of isolated variables with na's and unused data stripped
+    # Ouputs: proportion (in percentages) of 1's to used network size.
+    # Notes: Checks all varaibles! You will need to get rid of unused variables.
+    #   As well the tie identifies are determined by the first 8 characters of the
+    #   varaible names. Variable names require 2 things: tie identifiers must be
+    #   before and seperate from variable identifiers, tie identfiers must be either
+    #   farther than 8 characters from the beginning or change the "width" value to
+    #   cut variable identifiers out)
+    ##########
+    #Uses read.fwf to isolate column names of input, then takes the unique values
+    prop_name_int <- unique(read.fwf(textConnection(colnames(prop_check)), widths = 8))
+    #Changes list of names to characters rather than int
+    prop_names <- apply(prop_name_int, 1, as.character)
+    #Creates a list of 1's with length of the prop_names to be summed
+    prop_count <- rep.int(1, length(prop_names))
+    #Takes the entries per tie and checks if they have a 1, adds the TRUE/FALSE into
+    #  the prop_count to eliminate zero ties so it can be summed
+    for(i in 1:length(prop_names)){
+      prop_count[i] <- any(prop_check[, grepl(prop_names[i], names(prop_check))])
+    }
+    #Calculates the proportion from the sum the number alters who have at least a 1
+    proportion <- percent(sum(prop_count)/(nrow(mat) - 1))
+    
+    return(proportion)
+  }
+  
+  
   #Calculate Network size
   names_fill <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
                              name9, name10, name11, name12, name13, name14, name15)
@@ -335,10 +367,9 @@ make_table <- function(x) {
   kin2 <- kin[, grepl( "___2", names(kin))]
   # Bind kin together
   kin  <- cbind(kin1, kin2)
-  # Collapse by summing all kin rows into a number
-  kin_num  <- apply(kin, 1, sum, na.rm = TRUE)
+  
   # Calculate a proportion of kin
-  kin_prop <- percent(kin_num / (nrow(mat) - 1))
+  kin_prop <- checkbox_prop_maker(kin)
   
   # % of ties who heavily drink alcohol 
   alcohol <- x %>% select(name1alcohol:name15alcohol) 
@@ -360,18 +391,8 @@ make_table <- function(x) {
   #Removes answers of no health problems and unknown
   health <- health[, !grepl("___99", names(health))]
   health <- health[, !grepl("___0", names(health))]
-  #Creates vectors which help filter for each person and can record the sum of their health.
-  health_names <- c("e1he", "e2he", "e3he", "e4he", "e5he", "e6he", "e7he", "e8he",
-                    "e9he", "e10he", "e11he", "e12he", "e13he", "e14he", "e15he")
-  health_count <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-  #Takes the entries per tie and checks if they have a 1, adds the TRUE/FALSE into the 
-  for(i in 1:length(health_names)){
-    health_count[i] <- any(health[, grepl(health_names[i], names(health))])
-  }
-  #Calculates the percentage from the sum the number people who have health problems
-  health <- sum(health_count)
-  healthprob_prop <- percent(health/(nrow(mat) - 1))
-
+  
+  healthprob_prop <- checkbox_prop_maker(health)
   
   #Format all percents into a table
   table <- data.frame(size, density, kin_prop, diet_prop, exer_prop, alcohol_prop,
