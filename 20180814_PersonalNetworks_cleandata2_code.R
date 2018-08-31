@@ -11,7 +11,7 @@
 #          to 39 variables for further network and regression analyses. 
 # AUTHORS: Abby Halm, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 08/02/18
-# LATEST:  08/07/18
+# LATEST:  08/30/18
 # PSERIES: 20180807_PersonalNetworks_cleandata1_code.R
 # NSERIES: NA
 # NOTES:   Step 2 of 2 parts of the code, code requires output from part 1
@@ -90,7 +90,7 @@ return(mat)
 }
 
 # Build Matrix for All Participants
-#Using code developed by Amar Dhand, MD (06/16), built a 
+#Using code developed by Amar Dhand, MD DPHIL (06/16), built a 
 #loop that applies the matrix function to every row. 100+ lines of code to 2!
 z <- array(1:nrow(shape)) # An array of the number of rows
 mats <- lapply(z, make_matrix) # Applies the matrix function to every study ID
@@ -281,7 +281,7 @@ rm(list = setdiff(ls(), c("master.pre", "z", "tot_cells")))
 checker <- function(x){
   ##########
   # Function: Checks a vector of integers to see if it contains any 1's, does not
-  #   return warnings like the any() fucntion normally does
+  #   return warnings like the any() function normally does
   # Inputs: x = vector of integers
   # Ouputs: logical, TRUE or FALSE
   ##########  
@@ -458,7 +458,6 @@ exercise_all <- master.pre %>% select(study_id, name1exer:name15exer) %>%
 
 #Isolating 0=Does not exercise at least 3-4 times per week
 
-
 no_exercisers <- function(x){
   ##########
   # Function: Calculates proportion of alters who do not exercise 3-4 times per 
@@ -482,7 +481,6 @@ diet_all <- master.pre %>% select(study_id, name1diet:name15diet) %>%
   group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
 
 #Isolating those who have a unhealthy diet
-
 
 bad_diet <- function(x){
   ##########
@@ -570,3 +568,4 @@ final_table <- master %>% select(
 
 #Save parsed version as a .csv file
 write.csv(final_table, file = "Clean_Data.csv")
+
