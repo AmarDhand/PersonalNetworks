@@ -13,7 +13,7 @@
 #					 study_id's.
 # AUTHOR:  Liam McCafferty, Meghan Hutch, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 06/08/18
-# LATEST:  08/14/18
+# LATEST:  09/20/18
 # NOTES:   Code works on raw .csv outputs from REDCap, no processing required.
 # ##############################################################################
 
@@ -296,8 +296,7 @@ make_table <- function(x) {
   # Inputs: x = input dataset with 1 row
   # Ouputs: table, a single graphical table which contains health stats from dataset
   ##########
-  x <- dataset[3,]
-  
+
   #transform data to dataframe-table
   x <- tbl_df(x)
   
@@ -311,10 +310,10 @@ make_table <- function(x) {
     #   proportion of them (in relation to the total tie count) which are 1.
     # Inputs: prop_check = set of isolated variables with na's and unused data stripped
     # Ouputs: proportion (in percentages) of 1's to used network size.
-    # Notes: Checks all varaibles! You will need to get rid of unused variables.
+    # Notes: Checks all variables! You will need to get rid of unused variables.
     #   As well the tie identifies are determined by the first 8 characters of the
-    #   varaible names. Variable names require 2 things: tie identifiers must be
-    #   before and seperate from variable identifiers, tie identfiers must be either
+    #   variable names. Variable names require 2 things: tie identifiers must be
+    #   before and separate from variable identifiers, tie identfiers must be either
     #   farther than 8 characters from the beginning or change the "width" value to
     #   cut variable identifiers out)
     ##########
