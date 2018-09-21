@@ -11,7 +11,7 @@
 #          to 39 variables for further network and regression analyses. 
 # AUTHORS: Abby Halm, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 08/02/18
-# LATEST:  08/07/18
+# LATEST:  08/30/18
 # PSERIES: 20180807_PersonalNetworks_cleandata1_code.R
 # NSERIES: NA
 # NOTES:   Step 2 of 2 parts of the code, code requires output from part 1
@@ -90,7 +90,7 @@ return(mat)
 }
 
 # Build Matrix for All Participants
-#Using code developed by Amar Dhand, MD (06/16), built a 
+#Using code developed by Amar Dhand, MD DPHIL (06/16), built a 
 #loop that applies the matrix function to every row. 100+ lines of code to 2!
 z <- array(1:nrow(shape)) # An array of the number of rows
 mats <- lapply(z, make_matrix) # Applies the matrix function to every study ID
@@ -277,6 +277,17 @@ master.pre <- left_join(master.pre, df, by = c("study_id"))
 #Clean, remove unnecessary variables
 rm(list = setdiff(ls(), c("master.pre", "z", "tot_cells")))
 
+#checker fucntion used in multiple proportions
+checker <- function(x){
+  ##########
+  # Function: Checks a vector of integers to see if it contains any 1's, does not
+  #   return warnings like the any() function normally does
+  # Inputs: x = vector of integers
+  # Ouputs: logical, TRUE or FALSE
+  ##########  
+  ifelse(any(x %in% 1), TRUE, FALSE)
+}
+
 #Contact duration
 #This variable is for number of years of contact. 
 #It's another way to describe the links. Later, one can substitute this into the 
@@ -352,12 +363,25 @@ kin <- function(x){
   ifelse(roles[x, spouse_family] == 1, 1, 0)
   }
 
-#Create a df with only kin columns for all rows
-kin_df <- kin(z)
-#Collapse by summing all kin rows into a number
-kin_num <- apply(kin_df, 1, sum, na.rm = TRUE) #checks out correctly in RedCap
+#Creates a blank vector to store the number of ties with family members
+kin_prob_num <- c()
+
+kin_df <- as.data.frame(t(kin(z)))
+#Creates a new variable ties to sort each family member by its associated tie
+kin_df$ties <- read.fwf(textConnection(rownames(kin_df)),
+                                widths = 11)
+
+for(i in 1:(length(kin_df) - 1)){
+  #This for loop goes through each survey and checks to see if each tie has a family
+  #  member. The loop uses the by() function's factor system to organise each set
+  #  of family members by their previosly assigned tie identifier. Then it runs
+  #  the created checker function.
+  kin_prob_num[i] <- sum(by(kin_df[, i],
+                               kin_df$ties, checker) * 1)
+}
+
 #Calculate proportion of kin 
-kin_prop <- kin_num / tot_cells
+kin_prop <- kin_prob_num / tot_cells
 
 #Proportion of negative ties
 negative_all <- master.pre %>% select(study_id, name1neg:name15neg) %>%
@@ -416,9 +440,6 @@ drinkers <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion of alters who have not cut down on heavy drinking
   ##########
-  
-  #First value is what is checked, second value is what the checked value is replaced with,
-  #  third value is what the non-matching values are replaced with.
   yes_answers <- ifelse(alcohol_all[x, ] == 1, 1, 0)
   no_answers <- ifelse(alcohol_all[x, ] == 0, 1, 0)
   return(no_answers + yes_answers)
@@ -436,7 +457,6 @@ exercise_all <- master.pre %>% select(study_id, name1exer:name15exer) %>%
 	group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
 
 #Isolating 0=Does not exercise at least 3-4 times per week
-
 
 no_exercisers <- function(x){
   ##########
@@ -462,7 +482,6 @@ diet_all <- master.pre %>% select(study_id, name1diet:name15diet) %>%
 
 #Isolating those who have a unhealthy diet
 
-
 bad_diet <- function(x){
   ##########
   # Function: Calculates proportion of alters who have a bad diet for each study ID
@@ -485,9 +504,10 @@ health_all <- master.pre %>%
 	group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
 
 #Isolating those who have health problems ("___1", "___2","___3",or "___4")
+#  Health_all[1, !not] identifies all columns except ___0 and ___99
 not <- grepl("___0", names(health_all))|grepl("___99", names(health_all))
-#Health_all[1, !not] identifies all columns except ___0 and ___99
-
+#Creates a blank vector to store the number of ties with health problems
+health_prob_num <- c()
 
 health_prob <- function(x){
   ##########
@@ -500,9 +520,19 @@ health_prob <- function(x){
   }
 
 #Create a df with only health problem columns for all rows
-health_prob_df <- health_prob(z)
-#Collapse by summing all alters with health problems into a number
-health_prob_num <- apply(health_prob_df, 1, sum, na.rm = TRUE)
+health_prob_df <- as.data.frame(t(health_prob(z)))
+#Creates a new variable ties to sort each health problem by its associated tie
+health_prob_df$ties <- read.fwf(textConnection(rownames(health_prob_df)),
+                                widths = 11)
+
+for(i in 1:(length(health_prob_df) - 1)){
+  #This for loop goes through each survey and checks to see if each tie has a health
+  #  problem. The loop uses the by() function's factor system to organise each set
+  #  of health problems by their previosly assigned tie identifier. Then it runs
+  #  the created checker function.
+  health_prob_num[i] <- sum(by(health_prob_df[, i],
+                               health_prob_df$ties, checker) * 1)
+}
 #Proportion of alters with health problems
 health_prob_prop <- health_prob_num / tot_cells
 
@@ -538,3 +568,4 @@ final_table <- master %>% select(
 
 #Save parsed version as a .csv file
 write.csv(final_table, file = "Clean_Data.csv")
+
