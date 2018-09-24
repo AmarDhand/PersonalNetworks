@@ -338,7 +338,7 @@ make_table <- function(x) {
   #Calculate Network size
   names_fill <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
                              name9, name10, name11, name12, name13, name14, name15)
-  names_fill <- names_fill[1 == select(x ,name_1:name_15)]
+  names_fill <- names_fill[c(1 == select(x ,name_1:name_15))]
   names_box1 <- strsplit(as.character(x$more_names_1), split = ",")
   names_box2 <- strsplit(as.character(x$more_names_2), split = ",")
   names_box3 <- strsplit(as.character(x$more_names_3), split = ",")
