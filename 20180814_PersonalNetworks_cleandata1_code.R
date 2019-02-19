@@ -34,6 +34,9 @@ sample_data <- read.csv("20180807_PersonalNetwork_data.csv",
 #Stores "sample_data" as a table data frame for easier reading
 sample_data <- tbl_df(sample_data)
 
+#Check if REDCap has changed study_id to record_id, replace if so
+colnames(sample_data)[colnames(sample_data) == "record_id"] <- "study_id"
+
 ##The remaining code sets variable types and assigns levels to categorical
 #  variables. We given a detailed annotation of this process for the variable 
 #  "sex" below. Subsequent variables follow the same pattern. 
