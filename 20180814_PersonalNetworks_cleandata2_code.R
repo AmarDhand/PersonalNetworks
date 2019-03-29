@@ -59,6 +59,9 @@ library(igraph) # To transform and analyze network data
 
 #Load temp file created from 2nd part of code
 load("temp.rda")
+#In case study id's are out of order, this will reorder them to ensure that functions
+#  can preserve order and output information correctly.
+sample_data <- sample_data[order(sample_data$study_id), ]
 
 #Select study_id and each relationship tie
 shape <- sample_data %>% select(study_id, tie1:a_tie105) %>%
