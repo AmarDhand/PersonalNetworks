@@ -4,7 +4,7 @@
 # DIR:     "~/Desktop/PersonalNetworks"
 # INPUTS:  Fake data created in REDCap ("20180806_PersonalNetwork_data.csv") 
 #          Can be replaced with real data of participants.
-# OUTPUTS: An alter_data.rda file that contains data on Ego.
+# OUTPUTS: An alter_data.rda file that contains data on Alters of Ego's network
 # AUTHORS: Liam McCafferty, Amar Dhand
 # CREATED: 10/29/18
 # LATEST:  05/07/19
