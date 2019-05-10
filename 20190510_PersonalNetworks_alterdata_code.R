@@ -1,6 +1,6 @@
 ################################################################################
 # PROJECT: PersonalNetworks 
-# PURPOSE: Clean up ego-centric data for easier data analysis
+# PURPOSE: Clean up alter-centric data for easier data analysis
 # DIR:     "~/Desktop/PersonalNetworks"
 # INPUTS:  Fake data created in REDCap ("20180806_PersonalNetwork_data.csv") 
 #          Can be replaced with real data of participants.
