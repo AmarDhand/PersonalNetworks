@@ -12,6 +12,7 @@
 # NSERIES: NA
 # NOTES:   Adapted from Personal Health Survey Clean Data 1 code, designed to be
 #            modular for data analysis.
+#          Output variable is called "sample_data"
 ###############################################################################
 
 ###############################################################################
@@ -218,6 +219,7 @@ race3 <- r %>% gather(race, count, -study_id) %>% filter(count == 1) %>%
 #  row does not exist in the dataset we attaching. This can be important as you
 #  should always put the dataset you are adding stuff onto first in the function.
 race <- left_join(race1, race2, by = 'study_id')
+race <- left_join(race, race3, by = 'study_id')
 
 #Now we just name the variables of our combined dataset to our desired names.
 colnames(race) <- c("study_id", "race1", "race2", "race3")
@@ -228,6 +230,8 @@ colnames(race) <- c("study_id", "race1", "race2", "race3")
 example_data <- left_join(example_data, race, by = "study_id") %>% 
   select(-race___1:-race___88)
 
+#Removing Examples so we may start doing actual processing
+rm(example_data, r, race, race1, race2, race3)
 
 # #############################################################################
 

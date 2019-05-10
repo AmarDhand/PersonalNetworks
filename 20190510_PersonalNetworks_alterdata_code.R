@@ -10,7 +10,7 @@
 # LATEST:  05/07/19
 # PSERIES: NA
 # NSERIES: NA
-# NOTES:   
+# NOTES:   Output variable is named "alter_frame"
 ###############################################################################
 
 #Empties Global Environment cache
