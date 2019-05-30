@@ -6,7 +6,7 @@ Project description: This is R code to process data from REDCap form on personal
 
 Contact information: Amar Dhand, adhand@bwh.harvard.edu
 
-File organization: Statistical code, example data, codebook, and README file all together in the main directory. Statistical code in 3 parts which should be used in sequence: cleandata1, cleandata2, datafeedback. An additional 2 code files are for extra data processing for analysts.
+File organization: Statistical code, example data, codebook, and README file all together in the main directory. Statistical code in 3 parts which should be used in sequence: cleandata1, cleandata2, datafeedback. An additional 2 code files are for extra data processing for analysts: alterdata, egodata.
 
 File naming: Files names include data last saved, project name, code/series function, and file type (20180807_PersonalNetworks_cleandata1_code.R)
 
