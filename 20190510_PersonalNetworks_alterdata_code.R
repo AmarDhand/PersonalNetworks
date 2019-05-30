@@ -273,19 +273,15 @@ levels(alter_frame$neg) <- c("Negative Effect", "Positive/Neutral Effect")
 
 ############################ Adding race ######################################
 
-varpre_race <- "nameXrace___1"
-varpost_race <- "nameXrace___99"
-checkbox_race <- c("Black or African American", "White",
-                   "American Indian/Alaska Native", "Asian",
-                   "Native Hawaiian or Other Pacific Islander", "Other",
-                   "Don't know")
+alter_frame$race <- unlist(by(alter_frame, alter_frame$study_id,
+                             info_finder, suffix = "race"))
 
-list_race <- checkbox_arranger(alter_frame, varpre_race, varpost_race, checkbox_race)
+alter_frame$race <- factor(alter_frame$race, levels = c(1,2,3,4,5,77,99))
+levels(alter_frame$race) <- c("Black or African American", "White",
+                              "American Indian/Alaska Native", "Asian",
+                              "Native Hawaiian or Other Pacifc Islander",
+                              "Other", "Don't know")
 
-for(i in 1:length(checkbox_race)){
-  alter_frame[paste("race",i,sep = "")] <- factor(list_race[[i]],
-                                                       levels = checkbox_race)
-}
 
 ############################# Adding education ################################
 
