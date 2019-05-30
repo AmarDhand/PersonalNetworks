@@ -13,6 +13,8 @@
 # NOTES:   Adapted from Personal Health Survey Clean Data 1 code, designed to be
 #            modular for data analysis.
 #          Output variable is called "sample_data"
+#          This code is still in beta, please email w/ suggestions or questions
+#            lmccafferty@bwh.harvard.edu
 ###############################################################################
 
 ###############################################################################

@@ -10,7 +10,9 @@
 # LATEST:  05/07/19
 # PSERIES: NA
 # NSERIES: NA
-# NOTES:   Output variable is named "alter_frame"
+# NOTES:   Output variable is named "alter_frame".
+#          This code is still in beta, please email w/ suggestions or questions
+#            lmccafferty@bwh.harvard.edu
 ###############################################################################
 
 #Empties Global Environment cache
