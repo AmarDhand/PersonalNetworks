@@ -2,15 +2,15 @@
 # PROJECT: PersonalNetworks 
 # PURPOSE: Create a pdf for each entry in network survey, as well as a network 
 #					 grid of all surveys. Each survey is individually named and identfied 
-#					 by study_id
+#					 by record_id
 # DIR:     "~/Desktop/PersonalNetworks"
 # INPUTS:  Fake data created in REDCap ("20180806_PersonalNetwork_data.csv") 
 #          Can be replaced with real data of participants.
-# OUTPUTS: 1) A series of pdfs, each with the name "ID[study_id] Social Network 
+# OUTPUTS: 1) A series of pdfs, each with the name "ID[record_id] Social Network 
 #					 Image.pdf", each pdf contains a network graph w/ labels.
 #          2) A pdf with the name "Social Network Grid.pdf" which contains a 
 #					 montage of all created network graphs (w/out node labels) with 
-#					 study_id's.
+#					 record_id's.
 # AUTHOR:  Liam McCafferty, Meghan Hutch, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 06/08/18
 # LATEST:  09/20/18
@@ -45,8 +45,8 @@ library(grid) # For montage of networks
 #Imports data and assigns it to variable "dataset"
 dataset <- read.csv("20180807_PersonalNetwork_data.csv")
 
-#Check if REDCap has changed study_id to record_id, replace if so
-colnames(dataset)[colnames(dataset) == "record_id"] <- "study_id"
+#Check if REDCap has changed record_id to record_id, replace if so
+colnames(dataset)[colnames(dataset) == "record_id"] <- "record_id"
 
 #Function which makes a basic network matrix used by multiple functions
 make_base_mat <- function(x){
@@ -199,8 +199,8 @@ make_net_array <- function(l){
     matrix_list[[i]] <- make_mat(i)
   }
   
-  #Names each matrix in the list of matrices by their study_id number, used to name in grid
-  names(matrix_list) <- sprintf("ID %s", seq(l$study_id))
+  #Names each matrix in the list of matrices by their record_id number, used to name in grid
+  names(matrix_list) <- sprintf("ID %s", seq(l$record_id))
   
   #Saves the row size of each matrix in the list of network matrices as a vector
   rowsize <- sapply(matrix_list, nrow)
@@ -436,10 +436,10 @@ for(i in c(1:nrow(dataset))){
     next
   }
   
-  #Creates a pdf with the name of: "ID[study_id] Social Network Image.pdf", as the
+  #Creates a pdf with the name of: "ID[record_id] Social Network Image.pdf", as the
   #  study id's are unique to each row, it will create a seperate pdf file for each
   #  input rather than overlap each other.
-  pdf(file = (paste("ID", input$study_id, " Social Network Image", ".pdf",
+  pdf(file = (paste("ID", input$record_id, " Social Network Image", ".pdf",
   									sep = "")), width = 11, height = 7)
   #Creates a network graph and draws it onto the pdf
   grid.draw(make_image(input))

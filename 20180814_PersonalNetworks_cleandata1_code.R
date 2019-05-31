@@ -34,9 +34,6 @@ sample_data <- read.csv("20180807_PersonalNetwork_data.csv",
 #Stores "sample_data" as a table data frame for easier reading
 sample_data <- tbl_df(sample_data)
 
-#Check if REDCap has changed study_id to record_id, replace if so
-colnames(sample_data)[colnames(sample_data) == "record_id"] <- "study_id"
-
 ##The remaining code sets variable types and assigns levels to categorical
 #  variables. We given a detailed annotation of this process for the variable 
 #  "sex" below. Subsequent variables follow the same pattern. 
@@ -85,30 +82,30 @@ levels(sample_data$live_alone) <- c("No", "Yes")
 #Due to multiple choice, code below organizes particpant's choices
 #  into race1 and race2. If the participant only chooses 1 race, the value for 
 #  "race2" will be NA
-r <- sample_data %>% select(study_id, race___1:race___88)
-colnames(r) <- c("study_id", "Black", "White", "American_Indian", "Asian",
+r <- sample_data %>% select(record_id, race___1:race___88)
+colnames(r) <- c("record_id", "Black", "White", "American_Indian", "Asian",
 	"Hawaiian", "Other", "Unknown")
 #creates variable, "race1", that contains the first race a participant chooses
 #  if the participant selects multiple races, then "race1" variable represents
 #  the race that appears first in the list of choices, and does NOT denote any 
 #  ordering assigned by the participant 
-race1 <- r %>% gather(race, count, -study_id) %>% filter(count == 1) %>% 
-	arrange(study_id) %>% select(-count) %>% group_by(study_id) %>% slice(1) %>% 
+race1 <- r %>% gather(race, count, -record_id) %>% filter(count == 1) %>% 
+	arrange(record_id) %>% select(-count) %>% group_by(record_id) %>% slice(1) %>% 
 	data.frame()
 #creates variable, "race2", that contains the second race a participant chooses
 #  if the participant selects multiple races, then "race2" variable represents
 #  the race that appears second in the list of choices, and does NOT denote any 
 #  ordering assigned by the participant 
-race2 <- r %>% gather(race, count, -study_id) %>% filter(count == 1) %>% 
-	arrange(study_id) %>% select(-count) %>% group_by(study_id) %>% slice(2) %>% 
+race2 <- r %>% gather(race, count, -record_id) %>% filter(count == 1) %>% 
+	arrange(record_id) %>% select(-count) %>% group_by(record_id) %>% slice(2) %>% 
 	data.frame()
 
-#creates a table that combines "race1" and "race2" by study_id
-race <- left_join(race1, race2, by = 'study_id')
-colnames(race) <- c("study_id", "race1", "race2")
+#creates a table that combines "race1" and "race2" by record_id
+race <- left_join(race1, race2, by = 'record_id')
+colnames(race) <- c("record_id", "race1", "race2")
 #adds "race" table onto "sample_data", thus adding variables "race1" and "race2"
 #  to the original data frame, containing all variables
-sample_data <- left_join(sample_data, race, by = "study_id") %>% 
+sample_data <- left_join(sample_data, race, by = "record_id") %>% 
 	select(-race___1:-race___88)
 
 #Ego health habits: 
@@ -132,8 +129,8 @@ levels(sample_data$diet) <- c("No", "Yes")
 #The code below organizes the Ego's Health Problems (in which the participant
 #  can select multiple choices) into columns. 
 #same code as for "race" variable
-h <- sample_data %>% select(study_id, health___1:health___0)
-colnames(h) <- c("study_id", "General", "Pain", "Cognitive_MentalHealth",
+h <- sample_data %>% select(record_id, health___1:health___0)
+colnames(h) <- c("record_id", "General", "Pain", "Cognitive_MentalHealth",
 	"Cardiac", "NoProblems")
 #creates variable, "health_prob1", that contains the first health problem a 
 #  participant chooses if the participant selects multiple health problems, 
@@ -142,24 +139,24 @@ colnames(h) <- c("study_id", "General", "Pain", "Cognitive_MentalHealth",
 #  assigned by the participant 
 #The same code is then used to create variables for any second, third, or fourth
 #  health problems the participant chooses.
-health_prob1 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
-	group_by(study_id) %>% slice(1) %>% data.frame()
-health_prob2 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
-	group_by(study_id) %>% slice(2) %>% data.frame()
-health_prob3 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
-	group_by(study_id) %>% slice(3) %>% data.frame()
-health_prob4 <- h %>% gather(health_prob, count, -study_id) %>% 
-	filter(count == 1) %>% arrange(study_id) %>% select(-count) %>% 
-	group_by(study_id) %>% slice(4) %>% data.frame()
-health_problems <- left_join(health_prob1, health_prob2, by = 'study_id')
-health_problems <- left_join(health_problems, health_prob3, by = 'study_id')
-health_problems <- left_join(health_problems, health_prob4, by = 'study_id')
-colnames(health_problems) <- c("study_id", "health_problem1", "health_problem2",
+health_prob1 <- h %>% gather(health_prob, count, -record_id) %>% 
+	filter(count == 1) %>% arrange(record_id) %>% select(-count) %>% 
+	group_by(record_id) %>% slice(1) %>% data.frame()
+health_prob2 <- h %>% gather(health_prob, count, -record_id) %>% 
+	filter(count == 1) %>% arrange(record_id) %>% select(-count) %>% 
+	group_by(record_id) %>% slice(2) %>% data.frame()
+health_prob3 <- h %>% gather(health_prob, count, -record_id) %>% 
+	filter(count == 1) %>% arrange(record_id) %>% select(-count) %>% 
+	group_by(record_id) %>% slice(3) %>% data.frame()
+health_prob4 <- h %>% gather(health_prob, count, -record_id) %>% 
+	filter(count == 1) %>% arrange(record_id) %>% select(-count) %>% 
+	group_by(record_id) %>% slice(4) %>% data.frame()
+health_problems <- left_join(health_prob1, health_prob2, by = 'record_id')
+health_problems <- left_join(health_problems, health_prob3, by = 'record_id')
+health_problems <- left_join(health_problems, health_prob4, by = 'record_id')
+colnames(health_problems) <- c("record_id", "health_problem1", "health_problem2",
 	"health_problem3", "health_problem4")
-sample_data <- left_join(sample_data, health_problems, by = "study_id") %>% 
+sample_data <- left_join(sample_data, health_problems, by = "record_id") %>% 
 	select(-health___1:-health___0)
 
 ##Calculate total network size. Defined as all unique names entered in name
