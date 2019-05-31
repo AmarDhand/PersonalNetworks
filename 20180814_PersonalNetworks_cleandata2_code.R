@@ -21,7 +21,7 @@
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
+setwd("~/Desktop/London Project")
 
 #Detatches all packages from current iteration of R, most packages interfere with this code
 detach_all_packages <- function() {
@@ -556,8 +556,8 @@ final_table <- master %>% select(
 	#key identifiers
 	study_id, 
 	#demographics
-	age, sex, race1, race2, education = edu, zip, employment, occupation, income,
-	married, live_alone, household_number,
+	sex, race1, race2, education = edu, employment, occupation, income,
+	married, live_alone,
 	#health habits and problems
 	alcohol, smoke, exercise, healthy_diet = diet, 
 	health_problem1:health_problem4,

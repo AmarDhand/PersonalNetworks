@@ -21,7 +21,7 @@ rm(list = ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
+setwd("~/Desktop/London Project")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #  Tools -> Install Packages, then enter their exact names from within each library()
@@ -29,7 +29,7 @@ library(tidyverse)
 
 #Read in data
 #Imports data and assigns it to variable "sample_data"
-sample_data <- read.csv("20180807_PersonalNetwork_data.csv", 
+sample_data <- read.csv("ToolForVisuallyMappi_DATA_2019-05-31_2140.csv", 
 	stringsAsFactors = FALSE)
 #Stores "sample_data" as a table data frame for easier reading
 sample_data <- tbl_df(sample_data)
@@ -167,120 +167,9 @@ sample_data <- left_join(sample_data, health_problems, by = "study_id") %>%
 sample_data.df <- data.frame(sample_data) 
 datalist = list()
 
-calculate_size <- function(x) {
-##########
-# Function: Creates a network_size variable that takes into account any names 
-#           written in the extra names boxes
-# Inputs: x = Variable that stores the dataset
-# Ouputs: network_size variable for each ID 
-  ##########
-#first select all names put in the first 15 columns 
-names_first_15 <- sample_data %>% select(name1, name2, name3, name4, name5, 
-	name6, name7, name8, name9, name10, name11, name12, name13, name14, name15)
-
-#next, select the names for id x
-names_first_15 <- names_first_15[x, ]
-
-#create data frame and transpose it to make it easier to manage 
-names_first_15 <- as.data.frame(t(names_first_15))	
-
-#change the column name
-colnames(names_first_15) <- c("Names")
-	
-#select the keep/remove designation, stored as variables "name_1" to "name_15"
-#  for each of the first 15 names 
-keep_names <- sample_data %>% select(name_1:name_15)
-keep_names <- keep_names[x, ]
-
-#change colnames to numbers 1:15, so that it is easier to do rbind
-colnames(keep_names) <- c(1:15)
-
-#input the data into a data frame and transpose it
-keep_names <- data.frame(t(keep_names))
-
-#change the name of the column to "Value"
-colnames(keep_names) = "Value"
-
-#combine "names_first_15" (the first 15 names entered) and "keep_names" (the 
-#  keep/remove designation for each of the first 15 names) using cbind function
-names_combined <- cbind(names_first_15, keep_names)
-
-#remove any row that contain NA in names_combined
-names_combined <- names_combined[complete.cases(names_combined), ]
-
-#split names_combined into names designated as "keep" (Value = 1) and 
-#  names designated as "remove" (Value = 0)
-names_combined_keep <- split(names_combined, names_combined$Value == 1)
-
-# Select only the names designated as $`TRUE` ("keep")
-names_combined_keep <- names_combined_keep$`TRUE`
-
-#Change all characters into Uppercase
-names_combined_keep <- toupper(names_combined_keep$Names)
-
-#Remove any spaces 
-names_combined_keep <- gsub(" ", "", names_combined_keep)
-
-#Make names_combined_keep into a data frame to make it easier to manage
-names_combined_keep <- data.frame(names_combined_keep)
-colnames(names_combined_keep) <- "Names"
-
-#Now, take all of the names from the 3 extra names boxes 
-#  Strsplit : split names based on coma saparated value and change them into 
-#  characters. 
-names_box1 <- strsplit(as.character(sample_data$more_names_1)[x], 
-	split = ",")
-names_box2 <- strsplit(as.character(sample_data$more_names_2)[x], 
-	split = ",")
-names_box3 <- strsplit(as.character(sample_data$more_names_3)[x], 
-	split = ",")
-
-#Unlist names_box1:names_box3 and create a vector of names for each extra names 
-#  box
-names_box1 <- as.vector(unlist(names_box1, use.names = FALSE))
-names_box2 <- as.vector(unlist(names_box2, use.names = FALSE))
-names_box3 <- as.vector(unlist(names_box3, use.names = FALSE))
-
-#combine the 3 extra names vectors into list so that we can combine 
-#  names_box1:3 into one vector
-names_box <- list(names_box1, names_box2, names_box3)
-
-#make the names_box list into a vector
-names_box <- Reduce(c, names_box)
-
-#remove "NA" in names_box
-names_box <- names_box[!is.na(names_box)]
-
-#Remove Spaces in names_box
-names_box <- gsub(" ", "", names_box)
-
-#Change all character in names_box to uppercase 
-names_box <- toupper(names_box)
-
-#Remove duplicates values in names_box vector
-names_box <- unique(names_box)
-
-#makes names_box into a data frame and change the column name to "Names" 
-#  to make it easier to merge with names_combined_keep
-names_box <- data.frame(names_box)
-colnames(names_box) <- "Names"
-
-# Merge unique names from boxes with unique names of first 15 and 
-#remove duplicates between them 
-#  Keep this order. Placing names_combined_keep first preserves any duplicate 
-#  names that both designated as "keep" by the participant 
-names_network <- merge(names_combined_keep,names_box,by = c("Names"), all = TRUE)
-
-# convert names_network into a vector
-names_network <- as.vector(t(names_network))
-
-#calculate the total network size
-total_size <- length(names_network)
-return(total_size)
-}
-
-#apply 'calculate_size' function to all study IDs
-network_size <- unlist(lapply(1:nrow(sample_data), calculate_size))
+#Calculate network size by summing all selected names. This is simplified from
+#  previous version as we have no other names to deal with.
+network_size <- sample_data %>% select(name_1:name_15) %>% apply(1,sum)
 
 #merge network_size and remove other size variables to reduce confusion
 sample_data <- cbind(sample_data, network_size) %>% select(-size, -first)

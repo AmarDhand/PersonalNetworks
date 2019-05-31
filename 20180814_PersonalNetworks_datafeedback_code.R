@@ -24,7 +24,7 @@ rm(list=ls())
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
+setwd("~/Desktop/London Project")
 
 #Importing packages. If not yet installed, packages can be installed by going to:
 #Tools -> Install Packages, then enter their exact names from within each 
@@ -43,7 +43,7 @@ library(grid) # For montage of networks
 #  network
 
 #Imports data and assigns it to variable "dataset"
-dataset <- read.csv("20180807_PersonalNetwork_data.csv")
+dataset <- read.csv("ToolForVisuallyMappi_DATA_2019-05-31_2140.csv")
 
 #Check if REDCap has changed study_id to record_id, replace if so
 colnames(dataset)[colnames(dataset) == "record_id"] <- "study_id"
@@ -64,6 +64,10 @@ make_base_mat <- function(x){
   ties  <- as.integer(shape)
   #Creates a blank matrix
   mat   <- matrix(NA, 16, 16)
+  
+  #Name matrix columns and rows
+  colnames(mat) <- rownames(mat) <- c("EGO", paste0("Alter",c(1:15)))
+  
   #Fills the lower triangle of the matrix with the vector "ties"
   mat[lower.tri(mat)] <- ties
   #Transposes the lower triangle into the upper triangle of the matrix
@@ -72,35 +76,13 @@ make_base_mat <- function(x){
   mat[lower.tri(mat)] <- ties
   #Names the columns and rows with EGO as the first row/col, row/col 2:16 are numbered
   #  1:15 respectively.
-  colnames(mat) <- rownames(mat) <- c("EGO", "1", "2", "3", "4", "5", "6", "7", 
-      "8", "9", "10", "11", "12", "13", "14", "15")
+  
   
   #Removes columns and rows which have no tie entries, this removes people who are
   #  duplicates or over 10 and thus were not given any tie values.
   mat <- mat[(!colSums(mat,1) == 0), (!colSums(mat,1) == 0)]
   #Fills diagonal with 0s
   diag(mat) <- 0
-  
-  #Saves the named social ties from the survey
-  name_ties <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
-     name9, name10, name11, name12, name13, name14, name15)
-  #Converts vector of names into a dataframe
-  name_ties <- as.data.frame(t(name_ties))
-  #Add a column to name_ties which matches the names of the matrix coloumns (1-15)
-  name_ties$Replacement <- c("1", "2", "3", "4", "5", "6", "7", 
-      "8", "9", "10", "11", "12", "13", "14", "15")
-  #Saves names to the columns of name_ties for sorting
-  colnames(name_ties) <- c("Name", "Current")
-  #Create a new row to replace the name "EGO" from the matrix with the word "You"
-  ego_df <- c("You", "EGO")
-  ego_df <- as.data.frame(t(ego_df))
-  colnames(ego_df) <- c("Name", "Current") 
-  #Bind the name_ties with the new ego_df
-  name_ties <- rbind(ego_df, name_ties)
-  
-  #Replace the matrix names with those from name_ties
-  names <- match(colnames(mat), name_ties$Current) 
-  colnames(mat) <- rownames(mat) <- name_ties$Name[names]
   
   return(mat)
 }
@@ -152,32 +134,31 @@ make_net_array <- function(l){
     ##########
     
     #Saves the ties (edge data) of all egos and nodes as a 2D vector
-    shape <- select(l, tie1:a_tie105)
-    
-    #Isolates the ties of a single row, specified by the for-loop iteration, as a 1D
-    #  vector of integers. Each row in the dataset is a single survey, and thus graph
-    ties <- as.integer(shape[iterate, ])
-    
+    shape <- select(dataset[iterate,], tie1:a_tie105)
+    #Saves tie values as a 1D vector of integers.
+    ties  <- as.integer(shape)
     #Creates a blank matrix
-    mat <- matrix(NA, 16, 16)
+    mat   <- matrix(NA, 16, 16)
+    
+    #Name matrix columns and rows
+    colnames(mat) <- rownames(mat) <- c("EGO", paste0("Alter",c(1:15)))
+    
     #Fills the lower triangle of the matrix with the vector "ties"
     mat[lower.tri(mat)] <- ties
     #Transposes the lower triangle into the upper triangle of the matrix
-    mat <- t(mat)
+    mat   <- t(mat)
     #Refills the lower triangle of the matrix with ties
-    mat[lower.tri(mat)] <- ties #refill lower triangle
+    mat[lower.tri(mat)] <- ties
     #Names the columns and rows with EGO as the first row/col, row/col 2:16 are numbered
     #  1:15 respectively.
-    colnames(mat) <- rownames(mat) <- c("EGO", "1", "2", "3", "4", "5", "6", "7", 
-                                        "8", "9", "10", "11", "12", "13", "14", "15")
+    
     
     #Removes columns and rows which have no tie entries, this removes people who are
-    #  duplicates and thus were not given any tie values.
-    mat <- mat[(!colSums(mat, 1) == 0), (!colSums(mat, 1) == 0)]
-    #Converts all ties labeled NA into 0's. Designed to turn the diagnal divider of NA's 
-    #  into zero's, but will also correct any accidental NA's
-    mat[is.na(mat)] = 0
-    #Calls the variable mat so it is output
+    #  duplicates or over 10 and thus were not given any tie values.
+    mat <- mat[(!colSums(mat,1) == 0), (!colSums(mat,1) == 0)]
+    #Fills diagonal with 0s
+    diag(mat) <- 0
+    
     return(mat)
   }
   
@@ -339,26 +320,7 @@ make_table <- function(x) {
   
   
   #Calculate Network size
-  names_fill <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
-                             name9, name10, name11, name12, name13, name14, name15)
-  names_fill <- names_fill[c(1 == select(x ,name_1:name_15))]
-  names_box1 <- strsplit(as.character(x$more_names_1), split = ",")
-  names_box2 <- strsplit(as.character(x$more_names_2), split = ",")
-  names_box3 <- strsplit(as.character(x$more_names_3), split = ",")
-  
-  names_fill <- as.vector(unlist(names_fill, use.names = FALSE))
-  names_box1 <- as.vector(unlist(names_box1, use.names = FALSE))
-  names_box2 <- as.vector(unlist(names_box2, use.names = FALSE))
-  names_box3 <- as.vector(unlist(names_box3, use.names = FALSE))
-  
-  names_boxes <- c(names_box1, names_box2, names_box3)
-  names_boxes <- unique(toupper(trimws(names_boxes)))
-  names_boxes <- names_boxes[names_boxes != ""]
-  
-  names_boxes <- names_boxes[!(names_boxes %in% toupper(names_fill))]
-  names_total <- c(names_boxes, toupper(names_fill))
-  
-  size <- length(names_total)
+  size <- x %>% select(name_1:name_15) %>% sum()
   size <- paste(size, "People")
   
   #Calculate Density
