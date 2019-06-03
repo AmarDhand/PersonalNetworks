@@ -61,14 +61,14 @@ library(igraph) # To transform and analyze network data
 load("temp.rda")
 #In case study id's are out of order, this will reorder them to ensure that functions
 #  can preserve order and output information correctly.
-sample_data <- sample_data[order(sample_data$study_id), ]
+sample_data <- sample_data[order(sample_data$record_id), ]
 
-#Select study_id and each relationship tie
-shape <- sample_data %>% select(study_id, tie1:a_tie105) %>%
-  group_by(study_id) %>% slice(1)
+#Select record_id and each relationship tie
+shape <- sample_data %>% select(record_id, tie1:a_tie105) %>%
+  group_by(record_id) %>% slice(1)
 
 #Making a function that will create a blank matrix, then fill it with ties 
-#from one study_id, then assign EGO and alter number to the matrix
+#from one record_id, then assign EGO and alter number to the matrix
 make_matrix <- function(x) {
 ##########
 # Function: Creates an NA-stripped matrix from a single row dataset
@@ -155,33 +155,33 @@ effsize <- unlist(lapply(mats, function(x){as.numeric(index.egonet(x,
 structure <- data.frame(max_degree, mean_degree, density, constraint,
   constraintInt = constraint * 100, effsize)
 
-#Add study_id to "structure" data frame, so that we can add it to the original 
+#Add record_id to "structure" data frame, so that we can add it to the original 
 #  data set
-study_id <- shape$study_id[!rowsize < 3] #study id without small networks
-structure <- cbind(study_id = study_id, structure, stringsAsFactors = FALSE)
+record_id <- shape$record_id[!rowsize < 3] #study id without small networks
+structure <- cbind(record_id = record_id, structure, stringsAsFactors = FALSE)
 
-#Add the "structure" data frame to the original data set by matching "study_id"
-master.pre <- left_join(sample_data, structure, by = c("study_id")) 
+#Add the "structure" data frame to the original data set by matching "record_id"
+master.pre <- left_join(sample_data, structure, by = c("record_id")) 
 
 #Clean, remove unecessary variables
 rm(list = setdiff(ls(), c("master.pre", "raw", "wd", "z")))
 
 #Create variable, z, which is an arry of unique study IDs
-z <- array(1:length(unique(master.pre$study_id)))
+z <- array(1:length(unique(master.pre$record_id)))
 
 #Create new compositional variables: 
 #Calculate age SD
-#Select study_id, and the age of each name, from name 1 to 15
-age <- master.pre %>% select(study_id, name1age:name15age) %>% 
-  group_by(study_id) %>% slice(1)
+#Select record_id, and the age of each name, from name 1 to 15
+age <- master.pre %>% select(record_id, name1age:name15age) %>% 
+  group_by(record_id) %>% slice(1)
 #Calculate age SD
 age_sd <- apply(age[, -1], 1, sd, na.rm = TRUE) 
 
 #Sex IQV--Two versions here just to use for later code.
-sex <- master.pre %>% select(study_id, name1sex:name15sex) %>% 
-  group_by(study_id) %>% slice(1)
-sex1 <- master.pre %>% select(study_id, name1sex:name15sex) %>% 
-	group_by(study_id) %>% slice(1)
+sex <- master.pre %>% select(record_id, name1sex:name15sex) %>% 
+  group_by(record_id) %>% slice(1)
+sex1 <- master.pre %>% select(record_id, name1sex:name15sex) %>% 
+	group_by(record_id) %>% slice(1)
 
 sex1[sex1 == 2] <- NA #change "other" sex to NA for sex IQV calculation
 
@@ -210,8 +210,8 @@ cells_df <- cell_totals(z)
 tot_cells <- apply(cells_df, 1, sum)
 
 #Race IQV
-race <- master.pre %>% select(study_id, name1race:name15race) %>% 
-  group_by(study_id) %>% slice(1)
+race <- master.pre %>% select(record_id, name1race:name15race) %>% 
+  group_by(record_id) %>% slice(1)
 
 race[race == 77] <- NA #set "Other" values to NA for race IQV calculation
 race[race == 99] <- NA #set "Don't know" values to NA for race IQV calculation
@@ -243,8 +243,8 @@ IQVrace <- apply(z, 1, race_diversity)
 #The code first dichotomizes this variable to weak and strong and ties and
 #  then calculates a proportion of weak ties.
 
-freq <- master.pre %>% select(study_id, name1speak:name15speak) %>%
-  group_by(study_id) %>% slice(1)
+freq <- master.pre %>% select(record_id, name1speak:name15speak) %>%
+  group_by(record_id) %>% slice(1)
 
 freq[freq == 99] <- NA #Set "Don't know" to NA for calculating the proportion of 
 #                     weak ties
@@ -272,10 +272,10 @@ weak_freq <- apply(weak_df, 1, sum, na.rm = TRUE)
 weak_freq_prop <- weak_freq / tot_cells 
 
 #Add new variables, created above, to data object, "master.pre"
-study_id <- unique(master.pre$study_id)
-df <- data.frame(study_id, age_sd, IQVsex, IQVrace, weak_freq_prop, 
+record_id <- unique(master.pre$record_id)
+df <- data.frame(record_id, age_sd, IQVsex, IQVrace, weak_freq_prop, 
 	stringsAsFactors = FALSE)
-master.pre <- left_join(master.pre, df, by = c("study_id"))
+master.pre <- left_join(master.pre, df, by = c("record_id"))
 
 #Clean, remove unnecessary variables
 rm(list = setdiff(ls(), c("master.pre", "z", "tot_cells")))
@@ -297,8 +297,8 @@ checker <- function(x){
 #matrices (at least for ego-alter ties) and see if it improves the description. 
 #This can be done with frequency, duration, and distance.
 
-dur <- master.pre %>% select(study_id, name1length:name15length) %>%
-  group_by(study_id) %>% slice(1)
+dur <- master.pre %>% select(record_id, name1length:name15length) %>%
+  group_by(record_id) %>% slice(1)
 
 dur[dur == 99] <- NA #Code "Don't know" as NA
 
@@ -326,8 +326,8 @@ weak_dur_prop <- weak_dur / tot_cells
 #  (for ego-alter ties only). Here, I dicotomize at the 16 miles, 
 #  so far is >15 miles.
 
-dist <- master.pre %>% select(study_id, name1dist:name15dist) %>%
-  group_by(study_id) %>% slice(1)
+dist <- master.pre %>% select(record_id, name1dist:name15dist) %>%
+  group_by(record_id) %>% slice(1)
 #Isolating <3 = those who live farther than 15 miles away 
 
 
@@ -350,8 +350,8 @@ far_dist_prop <- far_dist / tot_cells
 #divide by total number of alters
 
 #Proportion kin 
-roles <- master.pre %>% select(study_id, name1relat___1:name15relat___77) %>%
-  group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+roles <- master.pre %>% select(record_id, name1relat___1:name15relat___77) %>%
+  group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 #Isolate all kin entries which are choices 1 through 2
 spouse_family <- grepl("___1", names(roles))|grepl("___2", names(roles))
@@ -387,26 +387,26 @@ for(i in 1:(length(kin_df) - 1)){
 kin_prop <- kin_prob_num / tot_cells
 
 #Proportion of negative ties
-negative_all <- master.pre %>% select(study_id, name1neg:name15neg) %>%
-  group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+negative_all <- master.pre %>% select(record_id, name1neg:name15neg) %>%
+  group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 negative <- apply(negative_all, 1, sum, na.rm = TRUE)
 neg_prop <- negative / tot_cells
 
 #Add new variables to data object
-study_id <- unique(master.pre$study_id)
-df <- data.frame(study_id, kin_prop, neg_prop, weak_dur_prop, far_dist_prop, 
+record_id <- unique(master.pre$record_id)
+df <- data.frame(record_id, kin_prop, neg_prop, weak_dur_prop, far_dist_prop, 
   stringsAsFactors = FALSE)
 
-master.pre <- left_join(master.pre, df, by = c("study_id"))
+master.pre <- left_join(master.pre, df, by = c("record_id"))
 
 #Health habits of network members
 #These variables examine the smoking, drinking, diet, and exercise 
 #  behaviors of the alters in the network.
 
 #Smoking
-smoking_all <- master.pre %>% select(study_id, name1smoke:name15smoke) %>%
-  group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+smoking_all <- master.pre %>% select(record_id, name1smoke:name15smoke) %>%
+  group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 #Isolating 0 = Not cut down on smoking and 1 = Cut down on smoking
 smokers <- function(x){
@@ -432,8 +432,8 @@ smoking <- apply(smokers_df, 1, sum, na.rm = TRUE)
 smoking_prop <- smoking / tot_cells
 
 #Heavy Alcohol
-alcohol_all <- master.pre %>% select(study_id, name1alcohol:name15alcohol) %>%
-  group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+alcohol_all <- master.pre %>% select(record_id, name1alcohol:name15alcohol) %>%
+  group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 #Isolating 0 = Not cut down on heavy drinking, 1 = cut down on heavy drinking
 drinkers <- function(x){
@@ -456,8 +456,8 @@ drinking <- apply(drinkers_df, 1, sum, na.rm = TRUE)
 drinking_prop <- drinking / tot_cells
 
 #No exercise
-exercise_all <- master.pre %>% select(study_id, name1exer:name15exer) %>%
-	group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+exercise_all <- master.pre %>% select(record_id, name1exer:name15exer) %>%
+	group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 #Isolating 0=Does not exercise at least 3-4 times per week
 
@@ -480,8 +480,8 @@ no_exercise <- apply(no_exercisers_df, 1, sum, na.rm = TRUE)
 no_exercise_prop <- no_exercise / tot_cells
 
 #Bad diet: 
-diet_all <- master.pre %>% select(study_id, name1diet:name15diet) %>%
-  group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+diet_all <- master.pre %>% select(record_id, name1diet:name15diet) %>%
+  group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 #Isolating those who have a unhealthy diet
 
@@ -503,8 +503,8 @@ bad_diet_prop <- bad_diet / tot_cells
 
 #Health problems: 
 health_all <- master.pre %>% 
-	select(study_id, name1health___1:name15health___99) %>%
-	group_by(study_id) %>% slice(1) %>% ungroup() %>% select(-study_id)
+	select(record_id, name1health___1:name15health___99) %>%
+	group_by(record_id) %>% slice(1) %>% ungroup() %>% select(-record_id)
 
 #Isolating those who have health problems ("___1", "___2","___3",or "___4")
 #  Health_all[1, !not] identifies all columns except ___0 and ___99
@@ -540,11 +540,11 @@ for(i in 1:(length(health_prob_df) - 1)){
 health_prob_prop <- health_prob_num / tot_cells
 
 #Add new variables to data object, "master.pre"
-study_id <- unique(master.pre$study_id)
-df <- data.frame(study_id, smoking_prop, drinking_prop, no_exercise_prop, 
+record_id <- unique(master.pre$record_id)
+df <- data.frame(record_id, smoking_prop, drinking_prop, no_exercise_prop, 
 	bad_diet_prop, health_prob_prop, stringsAsFactors = FALSE)
 
-master <- left_join(master.pre, df, by = c("study_id"))
+master <- left_join(master.pre, df, by = c("record_id"))
 
 write.csv(master, file = "Data_Unfiltered.csv")
 
@@ -554,7 +554,7 @@ rm(list=setdiff(ls(), c("master")))
 #Create parsed version for analysis
 final_table <- master %>% select(
 	#key identifiers
-	study_id, 
+	record_id, 
 	#demographics
 	age, sex, race1, race2, education = edu, zip, employment, occupation, income,
 	married, live_alone, household_number,
