@@ -120,24 +120,57 @@ make_net_array <- function(l){
     #Inputs: network matrix
     #Ouputs: network graph of imported matrix
     ##########
-    ego_g <- graph.adjacency(matrix_list[[z]], mode = "undirected",
-                             weighted = TRUE)
-    #Creates color palette for ties
-    colors <- c("1" = "blue", "2" = "red")
     
-    #Creates unique color palette for "ego" node
-    ego_col <- ifelse(V(ego_g)$name == "EGO", "black", "white")
     
-    #Determines structures of networks
-    ggplot(ego_g, aes(x = x, y = y, xend = xend, yend = yend)) + 
-      #Determines curvature and thickness of lines (unweighted)
-      geom_edges(aes(color = as.factor(weight)), curvature = 0.1) +
-      #Determines size and shape of nodes (shape21 = circle)
-      geom_nodes(fill = ego_col, size = 1, shape = 21) +
-      #Eliminates labels on each matrix
-      theme_blank(legend.position = "none") +
-      scale_color_manual(values = colors) +
-      ggtitle(names(matrix_list[z]))
+    
+    ####
+    if(nrow(matrix_list[[z]]) < 2){
+      #Constructs a single point graph w/ no line
+      
+      #Point graph requires zero matrix input
+      ggplot(data.frame(x=c(5,5), y=c(5,5)), aes(x = x, y = y)) +
+        #Technically the graph plots two points at 5,5, but they cover each other
+        #up so it appears as one point.
+        geom_point(fill = c("black", "black"), size = 1, shape = 21) +
+        #Eliminates labels on each matrix
+        theme_blank(legend.position = "none") +
+        #Applies matrix id into the graph name
+        ggtitle(names(matrix_list)[z])
+      
+    }else if(nrow(matrix_list[[z]]) == 2){
+      #Constructs a self-constructed two point graph w/ derived line color
+      
+      #Graphing matrix
+      ggplot(data.frame(x=c(10,5), y=c(10,5)), aes(x = x, y = y)) +
+        #Creates points, note that they are self-created rather than using nodes
+        geom_point(fill = c("black", "white"), size = 1, shape = 21) +
+        #Colors lines depending upon weight of tie using ifelse
+        geom_line(color = ifelse(matrix_list[[z]][1,2] == 1, "blue", "red")) +
+        #Eliminates labels on each matrix
+        theme_blank(legend.position = "none") +
+        #Applies matrix id into the graph name
+        ggtitle(names(matrix_list)[z])
+      
+    }else{
+      ego_g <- graph.adjacency(matrix_list[[z]], mode = "undirected",
+                               weighted = TRUE)
+      #Creates color palette for ties
+      colors <- c("1" = "blue", "2" = "red")
+      
+      #Creates unique color palette for "ego" node
+      ego_col <- ifelse(V(ego_g)$name == "EGO", "black", "white")
+      
+      #Determines structures of networks
+      ggplot(ego_g, aes(x = x, y = y, xend = xend, yend = yend)) + 
+        #Determines curvature and thickness of lines (unweighted)
+        geom_edges(aes(color = as.factor(weight)), curvature = 0.1) +
+        #Determines size and shape of nodes (shape21 = circle)
+        geom_nodes(fill = ego_col, size = 1, shape = 21) +
+        #Eliminates labels on each matrix
+        theme_blank(legend.position = "none") +
+        scale_color_manual(values = colors) +
+        ggtitle(names(matrix_list)[z]) 
+    }
   }
   
   #Function makes network matrices out of raw tie data
@@ -200,13 +233,11 @@ make_net_array <- function(l){
   }
   
   #Names each matrix in the list of matrices by their record_id number, used to name in grid
-  names(matrix_list) <- sprintf("ID %s", seq(l$record_id))
+  names(matrix_list) <- paste0("ID ", c(l$record_id))
   
   #Saves the row size of each matrix in the list of network matrices as a vector
   rowsize <- sapply(matrix_list, nrow)
-  #Eliminates the network matrices which have < 2 nodes (3 rows including EGO)
-  #  as ggplot2 is unable to create network graphs that small
-  matrix_list <- matrix_list[!rowsize < 3]
+  
   #Creates a blank array with the length of the matrix_list variable,
   #  assigns this array to variable z. This variable will be used
   #  to power the for-loop which creates network graphs
@@ -256,6 +287,7 @@ make_image <- function(x) {
     }
   })
   
+  
   if ("Unknown" %in% weight.ego ){
     #Error check to see if network has sufficient ties, will output a blank graph with
     #  error message.
@@ -263,6 +295,71 @@ make_image <- function(x) {
     plot1 <- ggplot(ego4.g, aes(x = x, y = y, xend = xend, yend = yend, na.rm = FALSE)) +
       geom_blank() + ggtitle("Data doesn't work: some network ties are unknown")
       
+  }else if(nrow(mat) < 2){
+    
+    #Setting the factors which determine the color and linetype of the single tie.
+    two_tie_strength <- factor("Strong Tie", levels = c("Strong Tie", "Weak Tie"))
+    two_tie_opposite <- factor("Weak Tie", levels = c("Strong Tie", "Weak Tie"))
+    
+    df2 <- data.frame(x=c(5,5), y=c(5,5))
+    
+    plot1 <- ggplot(df2, aes(x,y)) +
+      geom_point(fill=c("black"), shape = 21, size = 14) +
+      geom_nodelabel(label = c("You")) +
+      geom_line(aes(color = two_tie_strength, linetype = two_tie_strength), size = 2, alpha = 1) +
+      geom_line(aes(color = two_tie_opposite, linetype = two_tie_opposite), size = 2, alpha = 1) +
+      theme_blank() +
+      #Formats the legend which describes edge weight to the reader
+      theme(legend.position = "bottom", #format the legend 
+            legend.title = element_text(face = "bold", size = 15),
+            legend.text = element_text(size = 10)) + 
+      theme(legend.title.align = 0.5) + 
+      theme(plot.title = element_text(size = 18, face = "bold")) +
+      scale_colour_manual(name = "Tie Strength", values = c("red", "blue"))+
+      scale_shape_manual(name = "Tie Strength", values = c(22, 21)) +
+      scale_linetype_manual(name = "Tie Strength", values = c("solid", "dashed")) +
+      #Determins the margins around plot
+      theme(plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "cm")) +
+      #Formatting for legend's keys
+      theme(legend.direction = 'vertical',
+            legend.key.height = unit(1, "line"),
+            legend.key = element_rect(colour = NA, fill = NA))
+  }else if(nrow(mat) == 2){
+    #Note that this network graph is not technically created from our network
+    #  data as the ggnet package cannot process networks of 2 or less nodes. Thus
+    #  we have to "fake" it using a self-actuated graph.
+    
+    #Setting the factors which determine the color and linetype of the single tie.
+    two_tie_strength <- factor(ifelse(mat[1,2] == 2, "Strong Tie", "Weak Tie"),
+                               levels = c("Strong Tie", "Weak Tie"))
+    two_tie_opposite <- factor(ifelse(mat[1,2] == 1, "Strong Tie", "Weak Tie"),
+                           levels = c("Strong Tie", "Weak Tie"))
+    
+    #Generating locations for the two nodes
+    df1 <- data.frame(x=c(10,5), y=c(10,5))
+    
+    #Creates actual network graph
+    plot1 <- ggplot(df1, aes(x,y)) + 
+      geom_line(aes(color = two_tie_opposite, linetype = two_tie_opposite), size = 2, alpha = 0) +
+      geom_line(aes(color = two_tie_strength, linetype = two_tie_strength), size = 2) +
+      geom_point(fill=c("black", "white"), shape = 21, size = 14) + 
+      geom_nodelabel(label = c(rownames(mat))) +
+      theme_blank() +
+      #Formats the legend which describes edge weight to the reader
+      theme(legend.position = "bottom", #format the legend 
+            legend.title = element_text(face = "bold", size = 15),
+            legend.text = element_text(size = 10)) + 
+      theme(legend.title.align = 0.5) + 
+      theme(plot.title = element_text(size = 18, face = "bold")) +
+      scale_colour_manual(name = "Tie Strength", values = c("red", "blue"))+
+      scale_shape_manual(name = "Tie Strength", values = c(22, 21)) +
+      scale_linetype_manual(name = "Tie Strength", values = c("solid", "dashed")) +
+      #Determins the margins around plot
+      theme(plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "cm")) +
+      #Formatting for legend's keys
+      theme(legend.direction = 'vertical',
+            legend.key.height = unit(1, "line"),
+            legend.key = element_rect(colour = NA, fill = NA))
   }else{
     E(ego4.g)$weight <- weight.ego
     #Creates actual network graph
@@ -290,6 +387,7 @@ make_image <- function(x) {
             legend.key.height = unit(1, "line"),
             legend.key = element_rect(colour = NA, fill = NA))
   }
+  return(plot1)
 }
 
 #Function to Make Social Network Table
@@ -361,47 +459,61 @@ make_table <- function(x) {
   size <- length(names_total)
   size <- paste(size, "People")
   
-  #Calculate Density
-  Density_1 <- graph.density(graph.adjacency(mat[-1, -1], mode = "undirected",
-                                             weighted = TRUE))
-  density <- percent(Density_1)
-  
-  # % Kin 
-  kin  <- x %>% select(name1relat___1:name15relat___77) 
-  # relat1 and relat2 represent kin
-  kin1 <- kin[, grepl( "___1", names(kin))]
-  kin2 <- kin[, grepl( "___2", names(kin))]
-  # Bind kin together
-  kin  <- cbind(kin1, kin2)
-  
-  # Calculate a proportion of kin
-  kin_prop <- checkbox_prop_maker(kin)
-  
-  # % of ties who heavily drink alcohol 
-  alcohol <- x %>% select(name1alcohol:name15alcohol) 
-  alcohol$sum  <- length(which(alcohol == 0 | alcohol == 1))
-  alcohol_prop <- percent(alcohol$sum / (nrow(mat) - 1))
-  
-  # % of ties who don't exericse 
-  exer <- x %>% select(name1exer:name15exer) 
-  exer$sum  <- length(which(exer == 0))
-  exer_prop <- percent(exer$sum / (nrow(mat) - 1))
-  
-  # % of ties who don't eat a healthy diet 
-  diet <- x %>% select(name1diet:name15diet) 
-  diet$sum  <- length(which(diet == 0))
-  diet_prop <- percent(diet$sum / (nrow(mat) - 1))
-  
-  #%of ties with health conditions 
-  health  <- x %>% select(name1health___1:name15health___99)
-  #Removes answers of no health problems and unknown
-  health <- health[, !grepl("___99", names(health))]
-  health <- health[, !grepl("___0", names(health))]
-  
-  healthprob_prop <- checkbox_prop_maker(health)
+  #Calculate Density and dealing w/ low size inputs
+  if(nrow(mat) < 2){
+    density_value <- "Not Applicable"
+    kin_prop <- "Not Applicable"
+    alcohol_prop <- "Not Applicable"
+    exer_prop <- "Not Applicable"
+    diet_prop <- "Not Applicable"
+    healthprob_prop <- "Not Applicable"
+    
+  }else{
+    if(nrow(mat) == 2){
+      density_value <- "Not Applicable"
+    }else{
+      Density_1 <- graph.density(graph.adjacency(mat[-1, -1], mode = "undirected",
+                                                 weighted = TRUE))
+      density_value <- as.character(round(Density_1, 2))
+    }
+    
+    # % Kin 
+    kin  <- x %>% select(name1relat___1:name15relat___77) 
+    # relat1 and relat2 represent kin
+    kin1 <- kin[, grepl( "___1", names(kin))]
+    kin2 <- kin[, grepl( "___2", names(kin))]
+    # Bind kin together
+    kin  <- cbind(kin1, kin2)
+    
+    # Calculate a proportion of kin
+    kin_prop <- checkbox_prop_maker(kin)
+    
+    # % of ties who heavily drink alcohol 
+    alcohol <- x %>% select(name1alcohol:name15alcohol) 
+    alcohol$sum  <- length(which(alcohol == 0 | alcohol == 1))
+    alcohol_prop <- percent(alcohol$sum / (nrow(mat) - 1))
+    
+    # % of ties who don't exericse 
+    exer <- x %>% select(name1exer:name15exer) 
+    exer$sum  <- length(which(exer == 0))
+    exer_prop <- percent(exer$sum / (nrow(mat) - 1))
+    
+    # % of ties who don't eat a healthy diet 
+    diet <- x %>% select(name1diet:name15diet) 
+    diet$sum  <- length(which(diet == 0))
+    diet_prop <- percent(diet$sum / (nrow(mat) - 1))
+    
+    #%of ties with health conditions 
+    health  <- x %>% select(name1health___1:name15health___99)
+    #Removes answers of no health problems and unknown
+    health <- health[, !grepl("___99", names(health))]
+    health <- health[, !grepl("___0", names(health))]
+    
+    healthprob_prop <- checkbox_prop_maker(health)
+  }
   
   #Format all percents into a table
-  table <- data.frame(size, density, kin_prop, diet_prop, exer_prop, alcohol_prop,
+  table <- data.frame(size, density_value, kin_prop, diet_prop, exer_prop, alcohol_prop,
                       healthprob_prop)
   #Transposes dataframe to verticle orientation
   table <- t(table)
@@ -432,9 +544,9 @@ for(i in c(1:nrow(dataset))){
   #Isolates a single row from the dataset into variable input. Used in many fxns
   input <- dataset[i, ]
   #Checks to see if row in dataset has at least 3 ties, if not it skips the row
-  if (rowSums(select(input, tie1:tie15), na.rm = TRUE) < 3) { 
-    next
-  }
+  # if (rowSums(select(input, tie1:tie15), na.rm = TRUE) < 3) { 
+  #   next
+  # }
   
   #Creates a pdf with the name of: "ID[record_id] Social Network Image.pdf", as the
   #  study id's are unique to each row, it will create a seperate pdf file for each

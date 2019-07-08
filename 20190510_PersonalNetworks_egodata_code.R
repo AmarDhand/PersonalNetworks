@@ -564,6 +564,9 @@ make_matrix <- function(x) {
 #loop that applies the matrix function to every row. 100+ lines of code to 2!
 z <- array(1:nrow(shape)) # An array of the number of rows
 mats <- lapply(z, make_matrix) # Applies the matrix function to every study ID
+names(mats) <- levels(shape$record_id)[shape$record_id]
+
+
 
 #Transform to igraph objects with removal of ego
 
@@ -624,6 +627,43 @@ structure <- data.frame(max_degree, mean_degree, density, constraint,
 #  data set
 record_id <- shape$record_id[!rowsize < 3] #study id without small networks
 structure <- cbind(record_id = record_id, structure, stringsAsFactors = FALSE)
+
+
+#Add back in size < 3 network id's. We'll then use these id's to add correct information
+structure <- rbind(
+  structure,
+  data.frame("record_id" = small %>% names() %>% as.integer(),
+             max_degree = NA, mean_degree = NA, density = NA,
+             constraint = NA, constraintInt = NA, effsize = NA)
+)
+
+#Getting counts for each smalle id so that we can give accurate information
+#  depending upon if they are a network w/ 1 alter or a network with 0 alters.
+small_counts <- lapply(small, nrow)
+
+#For loop that assigns each small network w/in our structure dataframe with
+#  predetermined values depending upon if they are 1 or 0 alters big.
+for(i in 1:length(small)){
+  #First we use the name from our iterated matrix to match with the id within the
+  #  dataframe. Then we enter in information in accordance to the order:
+  #  record_id, max_degree, mean_degree, density, constraint, constraintInt, effsize
+  
+  #If network has only 1 alter (note that small_counts includes ego)
+  if(small_counts[[i]] == 2){
+    structure[names(small_counts)[i] %>% as.integer() == structure$record_id,] <-
+      c(names(small_counts)[i] %>% as.integer(), 0, 0, NA, 1, 100, 1)
+    
+    #If network has 0 alters (note that 0 alter matrices have no dimensions, usually)
+  }else if(i < 2){
+    structure[names(small_counts)[i] %>% as.integer() == structure$record_id,] <-
+      c(names(small_counts)[i] %>% as.integer(), 0, 0, NA, NA, NA, NA)
+    
+    #Returning error just in case.
+  }else{
+    stop("Small network is returning network size larger than 2")
+  }
+}
+
 
 #Add the "structure" data frame to the original data set by matching "record_id"
 sample_data <- left_join(sample_data, structure, by = c("record_id")) 

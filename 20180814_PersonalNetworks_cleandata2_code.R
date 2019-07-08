@@ -70,26 +70,26 @@ shape <- sample_data %>% select(record_id, tie1:a_tie105) %>%
 #Making a function that will create a blank matrix, then fill it with ties 
 #from one record_id, then assign EGO and alter number to the matrix
 make_matrix <- function(x) {
-##########
-# Function: Creates an NA-stripped matrix from a single row dataset
-# Inputs: x = Variable that stores the dataset
-# Ouputs: matrix "mat", the matrix will be stripped of people which have zero ties,
-#           the matrix will also turn diagonal NA's (and mistaken NA's) into 0's
-##########
-ties <- as.integer(shape[x, -1]) #select row for ID x
-mat <- matrix(NA, 16, 16) #create empty 16 x 16 matrix, with all values = NA
-mat[lower.tri(mat)] <- ties #fill lower triangle of matrix with ties
-mat <- t(mat) #transpose the matrix
-mat[lower.tri(mat)] <- ties #fill the lower triangle of matrix with ties, making 
-#                            the matrix redundant
-colnames(mat) <- rownames(mat) <- c("EGO", "1", "2", "3", "4", "5", "6", "7", 
-  "8", "9", "10", "11", "12", "13", "14", "15") #assign EGO and alter number 
-#                                                mannually into column and row 
-#                                                names of matrix
-mat <- mat[(!colSums(mat, 1) == 0), (!colSums(mat, 1) == 0)] #remove NA values
-diag(mat) <- 0 #assign diagonal, which represents an individual's tie with 
-#               him or herself equal to 0
-return(mat)
+  ##########
+  # Function: Creates an NA-stripped matrix from a single row dataset
+  # Inputs: x = Variable that stores the dataset
+  # Ouputs: matrix "mat", the matrix will be stripped of people which have zero ties,
+  #           the matrix will also turn diagonal NA's (and mistaken NA's) into 0's
+  ##########
+  ties <- as.integer(shape[x, -1]) #select row for ID x
+  mat <- matrix(NA, 16, 16) #create empty 16 x 16 matrix, with all values = NA
+  mat[lower.tri(mat)] <- ties #fill lower triangle of matrix with ties
+  mat <- t(mat) #transpose the matrix
+  mat[lower.tri(mat)] <- ties #fill the lower triangle of matrix with ties, making 
+  #                            the matrix redundant
+  colnames(mat) <- rownames(mat) <- c("EGO", "1", "2", "3", "4", "5", "6", "7", 
+    "8", "9", "10", "11", "12", "13", "14", "15") #assign EGO and alter number 
+  #                                                mannually into column and row 
+  #                                                names of matrix
+  mat <- mat[(!colSums(mat, 1) == 0), (!colSums(mat, 1) == 0)] #remove NA values
+  diag(mat) <- 0 #assign diagonal, which represents an individual's tie with 
+  #               him or herself equal to 0
+  return(mat)
 }
 
 # Build Matrix for All Participants
@@ -97,6 +97,7 @@ return(mat)
 #loop that applies the matrix function to every row. 100+ lines of code to 2!
 z <- array(1:nrow(shape)) # An array of the number of rows
 mats <- lapply(z, make_matrix) # Applies the matrix function to every study ID
+names(mats) <- sample_data$record_id
 
 #Transform to igraph objects with removal of ego
 
@@ -117,13 +118,13 @@ mats <- mats[!rowsize < 3]
 
 #creates igraph object with REMOVAL of Ego
 make_graph <- function (x) {
-##########
-# Function: Creates an NA-stripped matrix from a single row dataset
-# Inputs: x = Variable that stores the dataset
-# Ouputs: matrix "mat", the matrix will be stripped of people which have zero ties,
-#           the matrix will also turn diagonal NA's (and mistaken NA's) into 0's
-##########  
-	graph.adjacency(x[-1, -1], mode = "undirected", weighted = TRUE)
+  ##########
+  # Function: Creates an NA-stripped matrix from a single row dataset
+  # Inputs: x = Variable that stores the dataset
+  # Ouputs: matrix "mat", the matrix will be stripped of people which have zero ties,
+  #           the matrix will also turn diagonal NA's (and mistaken NA's) into 0's
+  ##########  
+  	graph.adjacency(x[-1, -1], mode = "undirected", weighted = TRUE)
 }
 graphs <- lapply(mats, make_graph) #creation of graph objects
 names(graphs) <- names(mats) #carry over patient id labels
@@ -160,6 +161,41 @@ structure <- data.frame(max_degree, mean_degree, density, constraint,
 record_id <- shape$record_id[!rowsize < 3] #study id without small networks
 structure <- cbind(record_id = record_id, structure, stringsAsFactors = FALSE)
 
+#Add back in size < 3 network id's. We'll then use these id's to add correct information
+structure <- rbind(
+  structure,
+  data.frame("record_id" = small %>% names() %>% as.integer(),
+             max_degree = NA, mean_degree = NA, density = NA,
+             constraint = NA, constraintInt = NA, effsize = NA)
+)
+
+#Getting counts for each smalle id so that we can give accurate information
+#  depending upon if they are a network w/ 1 alter or a network with 0 alters.
+small_counts <- lapply(small, nrow)
+
+#For loop that assigns each small network w/in our structure dataframe with
+#  predetermined values depending upon if they are 1 or 0 alters big.
+for(i in 1:length(small)){
+  #First we use the name from our iterated matrix to match with the id within the
+  #  dataframe. Then we enter in information in accordance to the order:
+  #  record_id, max_degree, mean_degree, density, constraint, constraintInt, effsize
+  
+  #If network has only 1 alter (note that small_counts includes ego)
+  if(small_counts[[i]] == 2){
+    structure[names(small_counts)[i] %>% as.integer() == structure$record_id,] <-
+      c(names(small_counts)[i] %>% as.integer(), 0, 0, NA, 1, 100, 1)
+    
+  #If network has 0 alters (note that 0 alter matrices have no dimensions, usually)
+  }else if(i < 2){
+    structure[names(small_counts)[i] %>% as.integer() == structure$record_id,] <-
+      c(names(small_counts)[i] %>% as.integer(), 0, 0, NA, NA, NA, NA)
+    
+  #Returning error just in case.
+  }else{
+    stop("Small network is returning network size larger than 2")
+  }
+}
+
 #Add the "structure" data frame to the original data set by matching "record_id"
 master.pre <- left_join(sample_data, structure, by = c("record_id")) 
 
@@ -186,11 +222,11 @@ sex1 <- master.pre %>% select(record_id, name1sex:name15sex) %>%
 sex1[sex1 == 2] <- NA #change "other" sex to NA for sex IQV calculation
 
 sex_diversity <- function(x) {
-##########
-# Function: Calculates IQV for sex of alters, excluding those designated as "other"
-# Inputs: x = Variable that stores the dataset
-# Ouputs: IQV of the sex of alters for each study ID
-########## 
+  ##########
+  # Function: Calculates IQV for sex of alters, excluding those designated as "other"
+  # Inputs: x = Variable that stores the dataset
+  # Ouputs: IQV of the sex of alters for each study ID
+  ########## 
   a <- sum(!is.na(sex1[x, 2:16])) #total number of alters
   b <- sum(sex1[x, 2:16], na.rm = TRUE) #number of men
   c <- a-b #number of women
@@ -217,12 +253,12 @@ race[race == 77] <- NA #set "Other" values to NA for race IQV calculation
 race[race == 99] <- NA #set "Don't know" values to NA for race IQV calculation
 
 race_diversity <- function(x) {
-##########
-# Function: Calculates IQV for race of alters, excluding those designated as 
-#           "Other" and "Don't Know:
-# Inputs: x = Variable that stores the dataset
-# Ouputs: IQV of the race of alters for each study ID
-########## 
+  ##########
+  # Function: Calculates IQV for race of alters, excluding those designated as 
+  #           "Other" and "Don't Know:
+  # Inputs: x = Variable that stores the dataset
+  # Ouputs: IQV of the race of alters for each study ID
+  ########## 
   a <- sum(!is.na(race[x, 2:11]))  #total number of alters
   b <- sum(race[x, 2:11] == 1, na.rm = TRUE)  #number of blacks
   c <- sum(race[x, 2:11] == 2, na.rm = TRUE)  #number of whites
@@ -262,7 +298,7 @@ weak <- function(x){
   # Ouputs: Proportion of weak ties based on frequency of contact for each Study ID
   ##########  
   ifelse(freq[x, -1] > 2, 1, 0)
-  } 
+} 
 
 #Create a df with only frequency of contact columns for all rows
 weak_df <- weak(z)
@@ -311,7 +347,7 @@ weak <- function(x){
   # Ouputs: Proportion of weak ties based on years of contact for each STUDY ID
   ##########  
   ifelse(dur[x, - 1] < 3, 1, 0)
-  }
+}
 
 #Create a df with only years of contact columns for all rows
 weak_df <- weak(z)
@@ -339,7 +375,7 @@ far <- function(x){
   # Ouputs: Proportion alters who live further than 15 miles away for each Study ID
   ##########  
   ifelse(dist[x, -1] < 3, 1, 0)
-  }
+}
 
 #Create a df with only distance columns for all rows
 far_df <- far(z)
@@ -364,7 +400,7 @@ kin <- function(x){
   # Ouputs: Proportion of alters who are kin each Study ID
   ##########  
   ifelse(roles[x, spouse_family] == 1, 1, 0)
-  }
+}
 
 #Creates a blank vector to store the number of ties with family members
 kin_prob_num <- c()
@@ -422,7 +458,7 @@ smokers <- function(x){
   yes_answers <- ifelse(smoking_all[x, ] == 1, 1, 0)
   no_answers <- ifelse(smoking_all[x, ] == 0, 1, 0)
   return(no_answers + yes_answers)
-  } 
+}
 
 #Create a df with only smoking columns for all rows
 smokers_df <- smokers(z)
@@ -446,7 +482,7 @@ drinkers <- function(x){
   yes_answers <- ifelse(alcohol_all[x, ] == 1, 1, 0)
   no_answers <- ifelse(alcohol_all[x, ] == 0, 1, 0)
   return(no_answers + yes_answers)
-  }
+}
 
 #Create a df with only alcohol columns for all rows
 drinkers_df <- drinkers(z)
@@ -470,7 +506,7 @@ no_exercisers <- function(x){
   #         Study ID
   ########## 
   ifelse(exercise_all[x, ] == 0, 1, 0)
-  }
+}
 
 #Create a df with only exercise columns for all rows
 no_exercisers_df <- no_exercisers(z)
@@ -492,7 +528,7 @@ bad_diet <- function(x){
   # Ouputs: Proportion of alters who have a bad diet for each Study ID
   ##########  
   ifelse(diet_all[x,] == 0, 1, 0)
-  }
+}
 
 #Create a df with only diet columns for all rows
 bad_diet_df <- bad_diet(z)
@@ -520,7 +556,7 @@ health_prob <- function(x){
   # Ouputs: Proportion of alters who have health problems for each Study ID
   ##########  
   ifelse(health_all[x, !not] == 1, 1, 0)
-  }
+}
 
 #Create a df with only health problem columns for all rows
 health_prob_df <- as.data.frame(t(health_prob(z)))
@@ -569,6 +605,8 @@ final_table <- master %>% select(
 	far_dist_prop, drinking_prop, smoking_prop, no_exercise_prop, bad_diet_prop,
 	health_prob_prop)
 
+#Converting all nan's to NA's to avoid any errors they may cause
+final_table[is.na(as.matrix(final_table))] <- NA
+
 #Save parsed version as a .csv file
 write.csv(final_table, file = "Clean_Data.csv")
-
