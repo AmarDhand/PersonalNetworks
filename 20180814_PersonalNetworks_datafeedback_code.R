@@ -46,7 +46,7 @@ library(grid) # For montage of networks
 dataset <- read.csv("20180807_PersonalNetwork_data.csv")
 
 #Check if REDCap has changed record_id to record_id, replace if so
-colnames(dataset)[colnames(dataset) == "record_id"] <- "record_id"
+colnames(dataset)[colnames(dataset) == "study_id"] <- "record_id"
 
 #Function which makes a basic network matrix used by multiple functions
 make_base_mat <- function(x){
