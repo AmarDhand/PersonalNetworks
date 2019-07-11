@@ -186,7 +186,7 @@ for(i in 1:length(small)){
       c(names(small_counts)[i] %>% as.integer(), 0, 0, NA, 1, 100, 1)
     
   #If network has 0 alters (note that 0 alter matrices have no dimensions, usually)
-  }else if(i < 2){
+  }else if(small_counts[[i]] < 2){
     structure[names(small_counts)[i] %>% as.integer() == structure$record_id,] <-
       c(names(small_counts)[i] %>% as.integer(), 0, 0, NA, NA, NA, NA)
     
