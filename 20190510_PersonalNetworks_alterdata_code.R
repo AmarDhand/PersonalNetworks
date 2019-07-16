@@ -32,7 +32,8 @@ library(tidyverse)
 #Read in data
 #Imports data and assigns it to variable "sample_data"
 sample_data <- read.csv("20180807_PersonalNetwork_data.csv", 
-                        stringsAsFactors = FALSE)
+                    stringsAsFactors = FALSE)
+
 #Stores "sample_data" as a table data frame for easier reading
 sample_data <- tbl_df(sample_data)
 
@@ -206,15 +207,18 @@ checkbox_arranger <- function(alter_frame, var_generic_pre, var_generic_post, ch
   return(output_list)
 }
 
+############# Creating an ordered factor to keep order consistent #############
+
+alter_id_factor <- factor(alter_frame$record_id, levels = unique(alter_frame$record_id))
 
 ############################# Adding alter names ##############################
 
-alter_frame$alter_names <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$alter_names <- unlist(by(alter_frame, alter_id_factor,
                                      info_finder, suffix = ""))
 
 ############################ Adding support data ##############################
 
-alter_frame$support <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$support <- unlist(by(alter_frame, alter_id_factor,
                                  info_finder, suffix = "support"))
 #As support data is technically a binary, though the values are 1 and NA rather
 #than 1 and 0, I transform all NA's into 0's.
@@ -256,7 +260,7 @@ for(i in 1:length(checkbox_supp)){
 
 ############################ Adding sex #######################################
 
-alter_frame$sex <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$sex <- unlist(by(alter_frame, alter_id_factor,
                              info_finder, suffix = "sex"))
 
 alter_frame$sex <- factor(alter_frame$sex, levels = c(1,0,2))
@@ -266,7 +270,7 @@ levels(alter_frame$sex) <- c("Male","Female","Other")
 #Adding "Do people in your network have a negative influence on your health"
 # or "neg" for short.
 
-alter_frame$neg <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$neg <- unlist(by(alter_frame, alter_id_factor,
                              info_finder, suffix = "neg"))
 
 alter_frame$neg <- factor(alter_frame$neg, levels = c(1,0))
@@ -275,7 +279,7 @@ levels(alter_frame$neg) <- c("Negative Effect", "Positive/Neutral Effect")
 
 ############################ Adding race ######################################
 
-alter_frame$race <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$race <- unlist(by(alter_frame, alter_id_factor,
                              info_finder, suffix = "race"))
 
 alter_frame$race <- factor(alter_frame$race, levels = c(1,2,3,4,5,77,99))
@@ -287,7 +291,7 @@ levels(alter_frame$race) <- c("Black or African American", "White",
 
 ############################# Adding education ################################
 
-alter_frame$educ <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$educ <- unlist(by(alter_frame, alter_id_factor,
                               info_finder, suffix = "educ"))
 
 alter_frame$educ <- factor(alter_frame$educ, levels = c(1, 2, 3, 4, 5, 6, 99))
@@ -299,7 +303,7 @@ levels(alter_frame$educ) <- c("Some high school or less", "High school grad",
 
 ############################# Adding Speak frequency ##########################
 
-alter_frame$speak <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$speak <- unlist(by(alter_frame, alter_id_factor,
                                info_finder, suffix = "speak"))
 
 alter_frame$speak <- factor(alter_frame$speak, levels = c(1, 2, 3, 4, 99))
@@ -310,7 +314,7 @@ levels(alter_frame$speak) <- c("Daily", "Weekly", "Monthly",
 ############################# Adding length ###################################
 #Adding length that the alter knows the ego
 
-alter_frame$length <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$length <- unlist(by(alter_frame, alter_id_factor,
                                 info_finder, suffix = "length"))
 
 alter_frame$length <- factor(alter_frame$length, levels = c(1, 2, 3, 99))
@@ -334,12 +338,12 @@ for(i in 1:length(checkbox_relat)){
 ############################# Adding Age ######################################
 #Does not need to be made into a factor as age in a straight integer
 
-alter_frame$age <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$age <- unlist(by(alter_frame, alter_id_factor,
                              info_finder, suffix = "age"))
 
 ############################# Adding alcohol ##################################
 
-alter_frame$alcohol <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$alcohol <- unlist(by(alter_frame, alter_id_factor,
                                  info_finder, suffix = "alcohol"))
 
 alter_frame$alcohol <- factor(alter_frame$alcohol, levels = c(1, 0, 9, 99))
@@ -348,7 +352,7 @@ levels(alter_frame$alcohol) <- c("Yes", "No", "Does not drink heavily",
 
 ############################# Adding smoke ####################################
 
-alter_frame$smoke <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$smoke <- unlist(by(alter_frame, alter_id_factor,
                                  info_finder, suffix = "smoke"))
 
 alter_frame$smoke <- factor(alter_frame$smoke, levels = c(1, 0, 9, 99))
@@ -357,7 +361,7 @@ levels(alter_frame$smoke) <- c("Yes", "No", "Does not smoke",
 
 ############################# Adding exercise #################################
 
-alter_frame$exer <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$exer <- unlist(by(alter_frame, alter_id_factor,
                               info_finder, suffix = "exer"))
 
 alter_frame$exer <- factor(alter_frame$exer, levels = c(1, 0, 99))
@@ -365,7 +369,7 @@ levels(alter_frame$exer) <- c("Yes", "No", "Don't know")
 
 ############################# Adding diet #####################################
 
-alter_frame$diet <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$diet <- unlist(by(alter_frame, alter_id_factor,
                               info_finder, suffix = "diet"))
 
 alter_frame$diet <- factor(alter_frame$diet, levels = c(1, 0, 99))
@@ -387,7 +391,7 @@ for(i in 1:length(checkbox_health)){
 
 ############################# Adding distance #################################
 
-alter_frame$dist <- unlist(by(alter_frame, alter_frame$record_id,
+alter_frame$dist <- unlist(by(alter_frame, alter_id_factor,
                               info_finder, suffix = "dist"))
 
 alter_frame$dist <- factor(alter_frame$dist, levels = c(1, 2, 3, 4, 5))
