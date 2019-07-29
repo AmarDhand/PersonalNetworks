@@ -185,10 +185,12 @@ checkbox_arranger <- function(alter_frame, var_generic_pre, var_generic_post, ch
   
   #by checkbox_finder function through alter_frame. Groups by record_id. Output
   #is a list of lists
-  checkbox_list <- by(alter_frame, alter_frame$record_id, checkbox_finder,
-                  var_generic_pre = var_generic_pre,
-                  var_generic_post = var_generic_post,
-                  checkbox_names = checkbox_names)
+  checkbox_list <- by(alter_frame,
+                      factor(alter_frame$record_id, levels = unique(alter_frame$record_id)),
+                      checkbox_finder, 
+                      var_generic_pre = var_generic_pre,
+                      var_generic_post = var_generic_post,
+                      checkbox_names = checkbox_names)
   
   #Creating blank list, then adding a false element to the list a +1 the
   #possible number of variable entries, so there is an open "NULL" space for us
