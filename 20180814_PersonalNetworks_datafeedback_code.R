@@ -80,6 +80,7 @@ make_base_mat <- function(x){
   mat <- mat[(!colSums(mat,1) == 0), (!colSums(mat,1) == 0)]
   #Fills diagonal with 0s
   diag(mat) <- 0
+  mat[is.na(mat)] <- 0
   
   #Saves the named social ties from the survey
   name_ties <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
