@@ -556,6 +556,7 @@ make_matrix <- function(x) {
   mat <- mat[(!colSums(mat, 1) == 0), (!colSums(mat, 1) == 0)] #remove NA values
   diag(mat) <- 0 #assign diagonal, which represents an individual's tie with 
   #               him or herself equal to 0
+  mat[is.na(mat)] <- NA
   return(mat)
 }
 
