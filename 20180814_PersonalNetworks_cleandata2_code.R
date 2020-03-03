@@ -223,12 +223,12 @@ race_diversity <- function(x) {
 # Inputs: x = Variable that stores the dataset
 # Ouputs: IQV of the race of alters for each study ID
 ########## 
-  a <- sum(!is.na(race[x, 2:11]))  #total number of alters
-  b <- sum(race[x, 2:11] == 1, na.rm = TRUE)  #number of blacks
-  c <- sum(race[x, 2:11] == 2, na.rm = TRUE)  #number of whites
-  d <- sum(race[x, 2:11] == 3, na.rm = TRUE)  #number of american indian/alaska natives
-  e <- sum(race[x, 2:11] == 4, na.rm = TRUE)  #number of asians
-  f <- sum(race[x, 2:11] == 5, na.rm = TRUE)  #number of native hawaiian/
+  a <- sum(!is.na(race[x, 2:16]))  #total number of alters
+  b <- sum(race[x, 2:16] == 1, na.rm = TRUE)  #number of blacks
+  c <- sum(race[x, 2:16] == 2, na.rm = TRUE)  #number of whites
+  d <- sum(race[x, 2:16] == 3, na.rm = TRUE)  #number of american indian/alaska natives
+  e <- sum(race[x, 2:16] == 4, na.rm = TRUE)  #number of asians
+  f <- sum(race[x, 2:16] == 5, na.rm = TRUE)  #number of native hawaiian/
   #                                                       other pacific islanders
   d <- (1 - ((b / a)^2 + (c / a)^2 + (d / a)^2 + (e / a)^2 + (f / a)^2)) / (1 - (1 / 5))
   return(d)
