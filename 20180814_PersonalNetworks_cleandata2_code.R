@@ -338,7 +338,7 @@ far <- function(x){
   # Inputs: x = Variable that stores the dataset
   # Ouputs: Proportion alters who live further than 15 miles away for each Study ID
   ##########  
-  ifelse(dist[x, -1] < 3, 1, 0)
+  ifelse(dist[x, -1] > 3, 1, 0)
   }
 
 #Create a df with only distance columns for all rows
