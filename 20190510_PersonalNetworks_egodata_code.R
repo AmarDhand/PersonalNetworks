@@ -342,11 +342,11 @@ levels(sample_data$income) <- c("less than $5,000", "$5,000 to $49,000",
 
 #Married ######################################################################
 sample_data$married <- factor(sample_data$married, levels = c(0,1))
-levels(sample_data) <- c("Not married", "Married")
+levels(sample_data$married) <- c("Not married", "Married")
 
 #Live Alone ###################################################################
 sample_data$live_alone <- factor(sample_data$live_alone, levels = c(0,1))
-levels(sample_data) <- c("No", "Yes")
+levels(sample_data$live_alone) <- c("No", "Yes")
 
 #Ego Alcohol###################################################################
 sample_data$alcohol <- factor(sample_data$alcohol, levels = c(1, 0, 9))
