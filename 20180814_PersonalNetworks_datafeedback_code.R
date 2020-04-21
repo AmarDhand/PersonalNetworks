@@ -126,18 +126,17 @@ make_net_array <- function(l){
     colors <- c("1" = "blue", "2" = "red")
     
     #Creates unique color palette for "ego" node
-    V(ego_g)$ego_col <- ifelse(V(ego_g)$name == "EGO", "black", "white")
+    ego_col <- ifelse(V(ego_g)$name == "EGO", "black", "white")
     
     #Determines structures of networks
     ggplot(ego_g, aes(x = x, y = y, xend = xend, yend = yend)) + 
       #Determines curvature and thickness of lines (unweighted)
       geom_edges(aes(color = as.factor(weight)), curvature = 0.1) +
       #Determines size and shape of nodes (shape21 = circle)
-      geom_nodes(aes(fill = ego_col), size = 1, shape = 21) +
+      geom_nodes(fill = ego_col, size = 1, shape = 21) +
       #Eliminates labels on each matrix
       theme_blank(legend.position = "none") +
       scale_color_manual(values = colors) +
-      scale_fill_manual(values = c("black", "white")) +
       ggtitle(names(matrix_list[z]))
   }
   
@@ -243,10 +242,11 @@ make_image <- function(x) {
   
   #Saves important values for determining graph formatting
   ego4.g  <- graph.adjacency(mat, mode = "undirected", weighted = TRUE)
-  V(ego4.g)$ego_col <- ifelse(V(ego4.g)$name == "You", "grey17", "white") 
+  colors  <- c("blue", "red") #create color palette for ties
+  ego_col <- ifelse(V(ego4.g)$name == "You", "grey17", "white") 
   
   #Saves logic to determine the strength of ties between nodes
-  E(ego4.g)$weight_cat <- sapply(E(ego4.g)$weight, function(yk){
+  weight.ego <- sapply(E(ego4.g)$weight, function(yk){
     if(is.na(yk)){
       return("Unknown")
     }else if(yk == 1){
@@ -256,7 +256,7 @@ make_image <- function(x) {
     }
   })
   
-  if ("Unknown" %in% E(ego4.g)$weight_cat ){
+  if ("Unknown" %in% weight.ego ){
     #Error check to see if network has sufficient ties, will output a blank graph with
     #  error message.
     print("Error: Some networks ties are unknown ")
@@ -264,15 +264,15 @@ make_image <- function(x) {
       geom_blank() + ggtitle("Data doesn't work: some network ties are unknown")
       
   }else{
-    # E(ego4.g)$weight <- weight.ego
+    E(ego4.g)$weight <- weight.ego
     #Creates actual network graph
     plot1 <- ggplot(ego4.g, aes(x = x, y = y, xend = xend, yend = yend, na.rm = FALSE)) + 
       #Determines coloration and style of network edges
-      geom_edges(aes(linetype = weight_cat, color = weight_cat), curvature = 0.1) +
+      geom_edges(aes(linetype = as.factor(weight), color = (weight)), curvature = 0.1) +
       #Fills nodes with ego_color pallate
-      geom_nodes(aes(fill = ego_col), size = 14, shape = 21) +
+      geom_nodes(fill = ego_col, size = 14, shape = 21) +
       #Names each node with alter names
-      geom_nodelabel(aes(label = name)) +
+      geom_nodelabel(label = rownames(mat))+
       theme_blank() +
       #Formats the legend which describes edge weight to the reader
       theme(legend.position = "bottom", #format the legend 
@@ -280,14 +280,12 @@ make_image <- function(x) {
             legend.text = element_text(size = 10)) + 
       theme(legend.title.align = 0.5) + 
       theme(plot.title = element_text(size = 18, face = "bold")) +
-      scale_colour_manual(name = "Tie Strength", values = c("red", "blue")) +
-      scale_fill_manual(values = c("grey17", "white")) +
+      scale_colour_manual(name = "Tie Strength", values = c("red", "blue"))+
       scale_shape_manual(name = "Tie Strength", values = c(22, 21)) +
       scale_linetype_manual(name = "Tie Strength", values = c("solid", "dashed")) +
       #Determins the margins around plot
       theme(plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "cm")) +
       #Formatting for legend's keys
-      guides(fill = FALSE) +
       theme(legend.direction = 'vertical',
             legend.key.height = unit(1, "line"),
             legend.key = element_rect(colour = NA, fill = NA))
