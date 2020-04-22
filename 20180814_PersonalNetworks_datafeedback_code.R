@@ -47,7 +47,7 @@ dataset <- read.csv("20180807_PersonalNetwork_data.csv")
 
 #Check if REDCap has changed record_id to record_id, replace if so
 colnames(dataset)[colnames(dataset) == "record_id"] <- "record_id"
-x <- dataset[1,]
+
 #Function which makes a basic network matrix used by multiple functions
 make_base_mat <- function(x){
   ##########
