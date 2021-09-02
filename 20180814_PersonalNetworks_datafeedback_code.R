@@ -20,15 +20,25 @@
 # Empties Global Environment cache
 rm(list=ls())
 
-#Set working directory to current file location
-#To set to own working directory
-#  select "Session->Set Working Directory->To Source File Location"
-#  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
-
 #Importing packages. If not yet installed, packages can be installed by going to:
-#Tools -> Install Packages, then enter their exact names from within each 
-#library()
+#  Tools -> Install Packages, then enter their exact names from within each library()
+#  Otherwise this set of code should automatically install the required packages.
+ifelse("tidyverse" %in% rownames(installed.packages()), "installed", install.packages("tidyverse"))
+ifelse("igraph" %in% rownames(installed.packages()), "installed", install.packages("igraph"))
+ifelse("ggnetwork" %in% rownames(installed.packages()), "installed", install.packages("ggnetwork"))
+ifelse("scales" %in% rownames(installed.packages()), "installed", install.packages("scales"))
+ifelse("gridExtra" %in% rownames(installed.packages()), "installed", install.packages("gridExtra"))
+ifelse("grid" %in% rownames(installed.packages()), "installed", install.packages("grid"))
+ifelse("sna" %in% rownames(installed.packages()), "installed", install.packages("sna"))
+ifelse("statnet.common" %in% rownames(installed.packages()), "installed", install.packages("statnet.common"))
+ifelse("statnet.common" %in% rownames(installed.packages()), "installed", install.packages("statnet.common"))
+# Due to egonet being dumped from CRAN every once an a while, we are sourcing
+#  the archived 1.2 version of egonet from the cran website.
+packageurl <- "https://cran.r-project.org/src/contrib/Archive/egonet/egonet_1.2.tar.gz"
+ifelse("egonet" %in% rownames(installed.packages()), "installed",
+       install.packages(packageurl, repos = NULL, type = "source") )
+rm(packageurl)
+
 library(tidyverse) # For data management
 library(igraph) # To transform and analyze network data
 library(ggnetwork) # To make good-looking network graphs
@@ -40,7 +50,15 @@ library(grid) # For montage of networks
 #  egonet
 #  sna
 #  statnet.common
-#  network
+#  statnet.common
+
+#Set working directory to current file location
+#This code should already work, but if not do this:
+#To set to own working directory
+#  select "Session->Set Working Directory->To Source File Location"
+#  then copy result in console into current "setwd("")".
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#setwd("~/Desktop/PersonalNetworks-master")
 
 #Imports data and assigns it to variable "dataset"
 dataset <- read.csv("20180807_PersonalNetwork_data.csv")
