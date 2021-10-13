@@ -65,12 +65,6 @@
 #Empties Global Environment cache
 rm(list = ls())
 
-#Set working directory to current file location
-#To set to own working directory
-#  select "Session->Set Working Directory->To Source File Location"
-#  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
-
 #Detatches all packages from current iteration of R, most packages interfere with this code
 detach_all_packages <- function() {
   ##########
@@ -91,10 +85,38 @@ detach_all_packages <- function() {
 detach_all_packages()
 
 #Importing packages. If not yet installed, packages can be installed by going to:
-#  Tools -> Install Packages, then enter their exact names from within each
-#  library()
-library(tidyverse)
+#  Tools -> Install Packages, then enter their exact names from within each library()
+#  Otherwise this set of code should automatically install the required packages.
+ifelse("tidyverse" %in% rownames(installed.packages()), "installed", install.packages("tidyverse"))
+ifelse("rstudioapi" %in% rownames(installed.packages()), "installed", install.packages("rstudioapi"))
+ifelse("igraph" %in% rownames(installed.packages()), "installed", install.packages("igraph"))
+ifelse("sna" %in% rownames(installed.packages()), "installed", install.packages("sna"))
+ifelse("statnet.common" %in% rownames(installed.packages()), "installed", install.packages("statnet.common"))
+ifelse("network" %in% rownames(installed.packages()), "installed", install.packages("network"))
+# Due to egonet being dumped from CRAN every once an a while, we are sourcing
+#  the archived 1.2 version of egonet from the cran website.
+packageurl <- "https://cran.r-project.org/src/contrib/Archive/egonet/egonet_1.2.tar.gz"
+ifelse("egonet" %in% rownames(installed.packages()), "installed",
+       install.packages(packageurl, repos = NULL, type = "source") )
+rm(packageurl)
+
+library(rstudioapi)
+library(tidyverse) # For data management
 library(igraph) # To transform and analyze network data
+#Although not supposed to load here, the functions below auto-loads the 
+#following. If not already, make sure to install these packages as well.
+#  egonet
+#  sna
+#  statnet.common
+#  network
+
+#Set working directory to current file location
+#This code should already work, but if not do this:
+#To set to own working directory
+#  select "Session->Set Working Directory->To Source File Location"
+#  then copy result in console into current "setwd("")".
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#setwd("~/Desktop/PersonalNetworks-master")
 
 #Read in data
 #Imports data and assigns it to variable "sample_data"

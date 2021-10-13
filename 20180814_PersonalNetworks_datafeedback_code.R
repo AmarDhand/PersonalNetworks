@@ -4,8 +4,7 @@
 #					 grid of all surveys. Each survey is individually named and identfied 
 #					 by record_id
 # DIR:     "~/Desktop/PersonalNetworks"
-# INPUTS:  Fake data created in REDCap ("20180806_PersonalNetwork_data.csv") 
-#          Can be replaced with real data of participants.
+# INPUTS:  Pre-processed data from egodata and alterdata codes
 # OUTPUTS: 1) A series of pdfs, each with the name "ID[record_id] Social Network 
 #					 Image.pdf", each pdf contains a network graph w/ labels.
 #          2) A pdf with the name "Social Network Grid.pdf" which contains a 
@@ -13,26 +12,53 @@
 #					 record_id's.
 # AUTHOR:  Liam McCafferty, Meghan Hutch, Nuzulul Kurniansyah, Amar Dhand
 # CREATED: 06/08/18
-# LATEST:  05/12/20
-# NOTES:   Code works on raw .csv outputs from REDCap, no processing required.
+# LATEST:  09/22/21
+# NOTES:   
 # ##############################################################################
 
-# Empties Global Environment cache
-rm(list=ls())
+#This code does two different actions:
+#Aim 1: First it constructs a labeled network graph PDF for each row/ID. This graph
+#  is colored, contains the names of each network member, and has a second page
+#  which lists some important statistics in a table form.
+#Aim 2: Second it makes a montage of these network graphs, each labeled with their
+#  constituent ID.
 
-#Set working directory to current file location
-#To set to own working directory
-#  select "Session->Set Working Directory->To Source File Location"
-#  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
+#In case you need to make changes this should help where to look:
+# | Function       |  What it does                 | Dependencies  | Aim Usage |
+# | -------------------------------------------------------------------------- |
+# | make_base_mat  | constructs adjacency matrix   | none          | 1 & 2     |
+# | make_net_array | makes list of network graphs  | make_base_mat | 2         |
+# | make_image     | makes one fancy network graph | make_base_mat | 1         |
+# | prop_calculator| calculates alter proportions  | none          | 1         |
+# | iqv_calculator | calculates alter diversity    | none          | 1         |
+# | make_table     | makes statistics table        | prop/iqv_calc | 1         |
+# | -------------------------------------------------------------------------- |
+
+# Empties Global Environment cache
+rm(list = ls())
 
 #Importing packages. If not yet installed, packages can be installed by going to:
-#Tools -> Install Packages, then enter their exact names from within each 
-#library()
+#  Tools -> Install Packages, then enter their exact names from within each library()
+#  Otherwise this set of code should automatically install the required packages.
+
+ifelse("tidyverse" %in% rownames(installed.packages()), "installed", install.packages("tidyverse"))
+ifelse("igraph" %in% rownames(installed.packages()), "installed", install.packages("igraph"))
+ifelse("ggnetwork" %in% rownames(installed.packages()), "installed", install.packages("ggnetwork"))
+ifelse("gridExtra" %in% rownames(installed.packages()), "installed", install.packages("gridExtra"))
+ifelse("grid" %in% rownames(installed.packages()), "installed", install.packages("grid"))
+ifelse("sna" %in% rownames(installed.packages()), "installed", install.packages("sna"))
+ifelse("statnet.common" %in% rownames(installed.packages()), "installed", install.packages("statnet.common"))
+ifelse("statnet.common" %in% rownames(installed.packages()), "installed", install.packages("statnet.common"))
+# Due to egonet being dumped from CRAN every once an a while, we are sourcing
+#  the archived 1.2 version of egonet from the cran website.
+packageurl <- "https://cran.r-project.org/src/contrib/Archive/egonet/egonet_1.2.tar.gz"
+ifelse("egonet" %in% rownames(installed.packages()), "installed",
+       install.packages(packageurl, repos = NULL, type = "source") )
+rm(packageurl)
+
 library(tidyverse) # For data management
 library(igraph) # To transform and analyze network data
 library(ggnetwork) # To make good-looking network graphs
-library(scales) # To add percentages
 library(gridExtra) # For montage of networks
 library(grid) # For montage of networks
 #Although not supposed to load here, the functions below auto-loads the 
@@ -40,30 +66,52 @@ library(grid) # For montage of networks
 #  egonet
 #  sna
 #  statnet.common
-#  network
+#  statnet.common
 
-#Imports data and assigns it to variable "dataset"
-dataset <- read.csv("20180807_PersonalNetwork_data.csv")
+#Set working directory to current file location
+#This code should already work, but if not do this:
+#To set to own working directory
+#  select "Session->Set Working Directory->To Source File Location"
+#  then copy result in console into current "setwd("")".
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#setwd("~/Desktop/PersonalNetworks-master")
 
-#Check if REDCap has changed record_id to record_id, replace if so
-colnames(dataset)[colnames(dataset) == "record_id"] <- "record_id"
+load("ego_data.rda")
+load("alter_data.rda")
 
 #Function which makes a basic network matrix used by multiple functions
-make_base_mat <- function(x){
+make_base_mat <- function(x, use_names = TRUE){
   ##########
-  # Function: Creates an NA-stripped matrix from a single row dataset
-  # Inputs: x = Variable that stores the dataset
-  # Ouputs: matrix "mat", the matrix will be stripped of people which have zero 
-	#					ties, the matrix will also turn diagonal NA's (and mistaken NA's) 
-	#					into 0's
+  # Function: Creates and outputs an adjacency matrix from input raw tie data
+  # Inputs: x = input data, must be single time point of data, can be either a
+  #   selected row of a dataframe or a vector/apply input. Data must contain
+  #   variables with ego-alter tie info (tie#), alter-alter tie info (a_tie#).
+  #   Alter names (name#) will be included if present in data, otherwise will
+  #   use default naming (You, 1:15). Use default variable names from raw data.
+  #   Function should be able to adapt to any number (larger than 1) of maximum
+  #   alters (default of PersNet is 15)
+  #         use_names = Accepts logical TRUE or FALSE, determines if the output
+  #   matrix's col/rownames are pulled from the network or are just numbers
+  # Ouputs: Function returns single matrix (mat), named
   ##########
   
-  #Saves the ties (edge data) of all egos and nodes as a 2D vector
-  shape <- select(x, tie1:a_tie105)
-  #Saves tie values as a 1D vector of integers.
-  ties  <- as.integer(shape)
+  #Accessing tie data for a vector, using grepl to identify names this function
+  #  should work even when number of network members extends/reduces the normal
+  #  15+1 network members. Ensure input uses default raw variable names
+  x[grepl("^tie|^a_tie", names(x))] %>%
+    as.integer() ->
+    ties
+  
+  #Calculates the number of ties we should have. Taken from number of possible
+  #  unique pairs in a set: n(n-1)/2 = y where n = number of values in set and
+  #  y = number of ties. As we know y already, then we can simplify the equation:
+  #    x^2 - x - (length(ties) * 2) = 0
+  #We can then solve for x using the quadratic equation and get the
+  #  (positive) value from this simplified formula:
+  tie_num = (1 + sqrt(1 - (4 * 1 * (- length(ties) * 2) ))) / 2 * 1
+  
   #Creates a blank matrix
-  mat   <- matrix(NA, 16, 16)
+  mat   <- matrix(NA, tie_num, tie_num)
   #Fills the lower triangle of the matrix with the vector "ties"
   mat[lower.tri(mat)] <- ties
   #Transposes the lower triangle into the upper triangle of the matrix
@@ -72,35 +120,21 @@ make_base_mat <- function(x){
   mat[lower.tri(mat)] <- ties
   #Names the columns and rows with EGO as the first row/col, row/col 2:16 are numbered
   #  1:15 respectively.
-  colnames(mat) <- rownames(mat) <- c("EGO", "1", "2", "3", "4", "5", "6", "7", 
-      "8", "9", "10", "11", "12", "13", "14", "15")
+  colnames(mat) <- rownames(mat) <- c("EGO", 1:(nrow(mat) - 1))
   
   #Removes columns and rows which have no tie entries, this removes people who are
   #  duplicates or over 10 and thus were not given any tie values.
-  mat <- mat[(!colSums(mat,1) == 0), (!colSums(mat,1) == 0)]
+  present_ties <- !colSums(mat,1) == 0
+  mat <- mat[present_ties, present_ties]
   #Fills diagonal with 0s
   diag(mat) <- 0
   
-  #Saves the named social ties from the survey
-  name_ties <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
-     name9, name10, name11, name12, name13, name14, name15)
-  #Converts vector of names into a dataframe
-  name_ties <- as.data.frame(t(name_ties))
-  #Add a column to name_ties which matches the names of the matrix coloumns (1-15)
-  name_ties$Replacement <- c("1", "2", "3", "4", "5", "6", "7", 
-      "8", "9", "10", "11", "12", "13", "14", "15")
-  #Saves names to the columns of name_ties for sorting
-  colnames(name_ties) <- c("Name", "Current")
-  #Create a new row to replace the name "EGO" from the matrix with the word "You"
-  ego_df <- c("You", "EGO")
-  ego_df <- as.data.frame(t(ego_df))
-  colnames(ego_df) <- c("Name", "Current") 
-  #Bind the name_ties with the new ego_df
-  name_ties <- rbind(ego_df, name_ties)
-  
-  #Replace the matrix names with those from name_ties
-  names <- match(colnames(mat), name_ties$Current) 
-  colnames(mat) <- rownames(mat) <- name_ties$Name[names]
+  if(any(grepl("^name[0-9]+$", names(x))) & use_names){
+    x[grepl("^name[0-9]+$", names(x))] %>%
+      as.character() %>%
+      c("You", .) %>%
+      "["(present_ties) -> colnames(mat) -> rownames(mat)
+  }
   
   return(mat)
 }
@@ -120,7 +154,7 @@ make_net_array <- function(l){
     #Inputs: network matrix
     #Ouputs: network graph of imported matrix
     ##########
-    ego_g <- graph.adjacency(matrix_list[[z]], mode = "undirected",
+    ego_g <- graph.adjacency(z, mode = "undirected",
                              weighted = TRUE)
     #Creates color palette for ties
     colors <- c("1" = "blue", "2" = "red")
@@ -137,114 +171,49 @@ make_net_array <- function(l){
       #Eliminates labels on each matrix
       theme_blank(legend.position = "none") +
       scale_color_manual(values = colors) +
-      scale_fill_manual(values = c("black", "white")) +
-      ggtitle(names(matrix_list[z]))
+      scale_fill_manual(values = c("black", "white"))
   }
   
-  #Function makes network matrices out of raw tie data
-  make_mat <- function(iterate){
-    ##########
-    # Function: Creates an NA-stripped matrix from a specified row of imported .csv
-    # Inputs: x = Variable that stores the .csv file
-    #        iterate = The iteration # of the for-loop the function is called from,
-    #                  used to access a specific row in the imported .csv file
-    # Ouputs: matrix "mat", the matrix will be stripped of people which have zero ties,
-    #        the matrix will also turn diagonal NA's (and mistaken NA's) into 0's
-    ##########
-    
-    #Saves the ties (edge data) of all egos and nodes as a 2D vector
-    shape <- select(l, tie1:a_tie105)
-    
-    #Isolates the ties of a single row, specified by the for-loop iteration, as a 1D
-    #  vector of integers. Each row in the dataset is a single survey, and thus graph
-    ties <- as.integer(shape[iterate, ])
-    
-    #Creates a blank matrix
-    mat <- matrix(NA, 16, 16)
-    #Fills the lower triangle of the matrix with the vector "ties"
-    mat[lower.tri(mat)] <- ties
-    #Transposes the lower triangle into the upper triangle of the matrix
-    mat <- t(mat)
-    #Refills the lower triangle of the matrix with ties
-    mat[lower.tri(mat)] <- ties #refill lower triangle
-    #Names the columns and rows with EGO as the first row/col, row/col 2:16 are numbered
-    #  1:15 respectively.
-    colnames(mat) <- rownames(mat) <- c("EGO", "1", "2", "3", "4", "5", "6", "7", 
-                                        "8", "9", "10", "11", "12", "13", "14", "15")
-    
-    #Removes columns and rows which have no tie entries, this removes people who are
-    #  duplicates and thus were not given any tie values.
-    mat <- mat[(!colSums(mat, 1) == 0), (!colSums(mat, 1) == 0)]
-    #Converts all ties labeled NA into 0's. Designed to turn the diagnal divider of NA's 
-    #  into zero's, but will also correct any accidental NA's
-    mat[is.na(mat)] = 0
-    #Calls the variable mat so it is output
-    return(mat)
-  }
+  #Applying make_base_mat function to create an adjacency matrix for each ID.
+  #  Also naming each constructed matrix by its ID, name is used in ID labels
+  #  for each network image in the montage. If you want label to look different,
+  #  simply change the text contained w/in the paste0() function.
+  apply(l, 1, make_base_mat) %>%
+    "names<-"(paste0("ID ", sample_data$record_id)) ->
+    matrix_list
   
-  
-  #Acquires the # of rows of the dataset to determine length of for-loop
-  mat_height <- dim(l)[1]
-  #Creates a sequence from 1 to the height of the dataset to be used in for-loop
-  mat_seq <- c(1:mat_height)
-  #Creates a blank list to store the created network matrices, the list is made to have
-  #  the same number of blank entries as rows in the dataset.
-  matrix_list <- vector("list", mat_height)
-  
-  #for-loop which iterates a number of times equal to the number of rows in the dataset.
-  #  Each iteration will call the function "make_mat", inputing the dataset and also
-  #  inputing the for-loops's iteration number (to call that row from the dataset).
-  #  "make_mat"'s  network matrix output is then assigned to matrix_list at the same index
-  #  as the row the network matrix was created from.
-  for(i in mat_seq){
-    matrix_list[[i]] <- make_mat(i)
-  }
-  
-  #Names each matrix in the list of matrices by their record_id number, used to name in grid
-  names(matrix_list) <- sprintf("ID %s", seq(l$record_id))
-  
-  #Saves the row size of each matrix in the list of network matrices as a vector
-  rowsize <- sapply(matrix_list, nrow)
   #Eliminates the network matrices which have < 2 nodes (3 rows including EGO)
   #  as ggplot2 is unable to create network graphs that small
-  matrix_list <- matrix_list[!rowsize < 3]
-  #Creates a blank array with the length of the matrix_list variable,
-  #  assigns this array to variable z. This variable will be used
-  #  to power the for-loop which creates network graphs
-  blank_array <- array(1:length(matrix_list))
-  
-  #Assigns blank list to variable "plots" to concatinate network images
-  plots <- list()
+  matrix_list <- matrix_list[!sapply(matrix_list, nrow) < 3]
   
   #Creates network image for each network matrix using fast_graph
-  #  function. Then concatinates network images into blank plots list
-  for(i in blank_array){
-    pl = fast_graph(i)
-    plots[[i]] <- pl
-  }
-  #Makes the function return the value of plots
-  return(plots)
+  #  function. lapply always outputs as list
+  plots <- lapply(matrix_list, fast_graph)
   
+  #Applying a title to each plot so that they are labeled in the montage.
+  lapply(1:length(plots), function(x){plots[[x]] + ggtitle(names(matrix_list)[x])}) %>%
+    "names<-"(names(matrix_list)) ->
+    plots
+  
+  return(plots)
 }
 
 #Function which makes Social Network Image 
 make_image <- function(x) {
   ##########
   # Function: Creates and outputs a network graph with nodes named and ties colored
-  # Inputs: x = input dataset with 1 row
+  # Inputs: x = input dataset with 1 row or input vector/apply object.
+  #    Follows same rules as make_base_mat()
   # Ouputs: plot1, a single network graph
   ##########
-  
-  #transform data to dataframe-table
-  x <- tbl_df(x)
   
   #Creates a network matrix from input dataset file
   mat <- make_base_mat(x)
   
   #Saves important values for determining graph formatting
   ego4.g  <- graph.adjacency(mat, mode = "undirected", weighted = TRUE)
-  V(ego4.g)$ego_col <- ifelse(V(ego4.g)$name == "You", "grey17", "white") 
-  
+  V(ego4.g)$ego_col <- ifelse(V(ego4.g)$name == "You", "grey17", "white")
+
   #Saves logic to determine the strength of ties between nodes
   E(ego4.g)$weight_cat <- sapply(E(ego4.g)$weight, function(yk){
     if(is.na(yk)){
@@ -256,7 +225,7 @@ make_image <- function(x) {
     }
   })
   
-  if ("Unknown" %in% E(ego4.g)$weight_cat ){
+  if("Unknown" %in% E(ego4.g)$weight_cat ){
     #Error check to see if network has sufficient ties, will output a blank graph with
     #  error message.
     print("Error: Some networks ties are unknown ")
@@ -264,9 +233,8 @@ make_image <- function(x) {
       geom_blank() + ggtitle("Data doesn't work: some network ties are unknown")
       
   }else{
-    # E(ego4.g)$weight <- weight.ego
     #Creates actual network graph
-    plot1 <- ggplot(ego4.g, aes(x = x, y = y, xend = xend, yend = yend, na.rm = FALSE)) + 
+    plot1 <- ggplot(ggnetwork(ego4.g), aes(x = x, y = y, xend = xend, yend = yend, na.rm = FALSE)) + 
       #Determines coloration and style of network edges
       geom_edges(aes(linetype = weight_cat, color = weight_cat), curvature = 0.1) +
       #Fills nodes with ego_color pallate
@@ -294,6 +262,108 @@ make_image <- function(x) {
   }
 }
 
+#Function which constructs proportions for make_table()
+prop_calculator <- function(input_alters, input_check, na.rm = TRUE){
+  ##########
+  #Function: Calculates a proportion value from an input data and categories
+  #Input: input_alters - input data, accepts either vector or matrix/dataframe.
+  #         Expects input to be either character or factor.
+  #       input_check - vector of values the function will check the proportion of
+  #       checks if NA's are included in proportion, otherwise they are removed
+  #Output:Numeric with length of 1, proportion of given input_check present in input_alters.
+  ##########
+  
+  #Logic for vectors. Potential area for error as is.atomic sometimes picks up
+  #  matrices. Hopefully they are filtered out by !is.matrix(), however if
+  #  further areas occur this may be the point.
+  if(is.atomic(input_alters) & !is.matrix(input_alters)){
+    if(na.rm){
+      alter_count <- sum(!is.na(input_alters))
+    }else if(!na.rm){
+      alter_count <- length(input_alters)
+    }
+    match_count <- sum(as.character(input_alters) %in% as.character(input_check))
+    
+    #Logic for dataframes or matrices. If input is a list it may be problematic so
+    #  we return NA's otherwise.
+  }else if(is.data.frame(input_alters) | is.matrix(input_alters)){
+    if(na.rm){
+      alter_count <- sum(!is.na(input_alters[,1]))
+    }else if(!na.rm){
+      alter_count <- nrow(input_alters)
+    }
+    
+    apply(input_alters, 1, function(x){
+      any(x %in% input_check)
+    }) %>% sum(na.rm = TRUE) -> match_count
+    
+    #Error stop in case we don't trip either vector or dataframe/matrix
+    #  statements. Hopefully this catches all use cases so that users will
+    #  interpret what issue their input is having.
+  }else{
+    stop("input_alters is not falling into category of vector or dataframe/matrix")
+  }
+  
+  #Logic checking if all alters are NA's. If this is the case returning a 0 would
+  #  be innacurate as there is no data at all.
+  if(alter_count == 0){
+    return(NA)
+  }else{
+    #Return of the proportion
+    return(match_count / alter_count)
+  }
+}
+
+#Function which constructs diversity calcuations (IQV) for the table function
+iqv_calculator <- function(input_alters, possible_categories = NA){
+  ##########
+  #Function: Calculates a diversity statistic from an input data
+  #Input: input_alters - input data, accepts either vector or matrix/dataframe.
+  #         Expects input to be either character or factor.
+  #       possible_categories - vector of possible categories a variable may
+  #         contain. If data is not in factor form, the function will assume that
+  #         all possible categories are included in the input data. To give the
+  #         function the full set of possible categories or limit the categories to
+  #         a certain set, this input can be used to manually override.
+  #         checks if NA's are included in proportion, otherwise they are removed
+  #Output:Numeric with length of 1, diversity calculation using IQV
+  ##########
+  
+  #Creating function which will be recursively used in calculations
+  iqv_chunk <- function(cat_count, alter_total){
+    sapply(cat_count,function(x){(x/alter_total)^2})
+  }
+  #Number of alters w/ logic for removing NA's
+  alter_total <- sum(!is.na(input_alters))
+  
+  #Possible categories
+  if(!any(is.na(possible_categories))){
+    #If we have no factor but defined categories, then we use them
+    possible_categories_count <- possible_categories %>% length()
+  }else if(is.factor(input_alters)){
+    #If we have factors we default use their levels
+    possible_categories <- input_alters %>% levels()
+    possible_categories_count <- possible_categories %>% length()
+  }else if(any(is.na(possible_categories))){
+    #If we have no factor, and if no categories we use uniques
+    possible_categories <- input_alters %>% unique()
+    possible_categories_count <- possible_categories %>% length()
+  }
+  
+  #Each category count
+  cat_count <- sapply(possible_categories, function(x){sum(input_alters %in% x)})
+  
+  #Calculation, w/ logic to return NA rather than Inf if denominator is 0
+  if(alter_total == 0){
+    return(NA)
+  }else if(all(is.na(input_alters))){
+    return(NA)
+  }else{
+    return((1 - sum(iqv_chunk(cat_count, alter_total))) /
+             (1 - (1/possible_categories_count) ))
+  }
+}
+
 #Function to Make Social Network Table
 make_table <- function(x) {
   ##########
@@ -302,138 +372,69 @@ make_table <- function(x) {
   # Ouputs: table, a single graphical table which contains health stats from dataset
   ##########
 
-  #transform data to dataframe-table
-  x <- tbl_df(x)
+  #Isolating our alter information for our specific ID
+  alter_chunk <- alter_frame %>% subset(record_id == x$record_id)
   
-  #Creates a network matrix from input dataset file
-  mat <- make_base_mat(x)
+  percentage <- function(input){paste0(input * 100, "%")}
   
-  #Function used to find proportions of checkboxes
-  checkbox_prop_maker <- function(prop_check){
-    ##########
-    # Function: Takes a selected set of variables from a REDCap checkbox and finds the
-    #   proportion of them (in relation to the total tie count) which are 1.
-    # Inputs: prop_check = set of isolated variables with na's and unused data stripped
-    # Ouputs: proportion (in percentages) of 1's to used network size.
-    # Notes: Checks all variables! You will need to get rid of unused variables.
-    #   As well the tie identifies are determined by the first 8 characters of the
-    #   variable names. Variable names require 2 things: tie identifiers must be
-    #   before and separate from variable identifiers, tie identfiers must be either
-    #   farther than 8 characters from the beginning or change the "width" value to
-    #   cut variable identifiers out)
-    ##########
-    #Uses read.fwf to isolate column names of input, then takes the unique values
-    prop_name_int <- unique(read.fwf(textConnection(colnames(prop_check)), widths = 8))
-    #Changes list of names to characters rather than int
-    prop_names <- apply(prop_name_int, 1, as.character)
-    #Creates a list of 1's with length of the prop_names to be summed
-    prop_count <- rep.int(1, length(prop_names))
-    #Takes the entries per tie and checks if they have a 1, adds the TRUE/FALSE into
-    #  the prop_count to eliminate zero ties so it can be summed
-    for(i in 1:length(prop_names)){
-      prop_count[i] <- any(prop_check[, grepl(prop_names[i], names(prop_check))])
-    }
-    #Calculates the proportion from the sum the number alters who have at least a 1
-    proportion <- percent(sum(prop_count)/(nrow(mat) - 1))
-    
-    return(proportion)
-  }
+  #### Constructing table statistics #####
   
+  #Network size from ego_data calculations
+  size <- x$network_size
   
-  #Calculate Network size
-  names_fill <- x %>% select(name1, name2, name3, name4, name5, name6, name7, name8,
-                             name9, name10, name11, name12, name13, name14, name15)
-  names_fill <- names_fill[c(1 == select(x ,name_1:name_15))]
-  names_box1 <- strsplit(as.character(x$more_names_1), split = ",")
-  names_box2 <- strsplit(as.character(x$more_names_2), split = ",")
-  names_box3 <- strsplit(as.character(x$more_names_3), split = ",")
-  
-  names_fill <- as.vector(unlist(names_fill, use.names = FALSE))
-  names_box1 <- as.vector(unlist(names_box1, use.names = FALSE))
-  names_box2 <- as.vector(unlist(names_box2, use.names = FALSE))
-  names_box3 <- as.vector(unlist(names_box3, use.names = FALSE))
-  
-  names_boxes <- c(names_box1, names_box2, names_box3)
-  names_boxes <- unique(toupper(trimws(names_boxes)))
-  names_boxes <- names_boxes[names_boxes != ""]
-  
-  names_boxes <- names_boxes[!(names_boxes %in% toupper(names_fill))]
-  names_total <- c(names_boxes, toupper(names_fill))
-  
-  size <- length(names_total)
-  size <- paste(size, "People")
-  
-  #Calculate Density
-  Density_1 <- graph.density(graph.adjacency(mat[-1, -1], mode = "undirected",
-                                             weighted = TRUE))
-  density <- percent(Density_1)
+  #Density from ego_data calculations
+  Density_1 <- x$density
   
   # % Kin 
-  kin  <- x %>% select(name1relat___1:name15relat___77) 
-  # relat1 and relat2 represent kin
-  kin1 <- kin[, grepl( "___1", names(kin))]
-  kin2 <- kin[, grepl( "___2", names(kin))]
-  # Bind kin together
-  kin  <- cbind(kin1, kin2)
-  
-  # Calculate a proportion of kin
-  kin_prop <- checkbox_prop_maker(kin)
+  kin_prop <- prop_calculator(alter_chunk[grepl("^relat", colnames(alter_chunk))],
+                              c("Spouse", "Family"))
   
   # % of ties who heavily drink alcohol 
-  alcohol <- x %>% select(name1alcohol:name15alcohol) 
-  alcohol$sum  <- length(which(alcohol == 0 | alcohol == 1))
-  alcohol_prop <- percent(alcohol$sum / (nrow(mat) - 1))
+  alcohol_prop <- prop_calculator(alter_chunk$alcohol, c("Yes", "No"))
   
   # % of ties who don't exericse 
-  exer <- x %>% select(name1exer:name15exer) 
-  exer$sum  <- length(which(exer == 0))
-  exer_prop <- percent(exer$sum / (nrow(mat) - 1))
+  exer_prop <- prop_calculator(alter_chunk$exer, c("No"))
   
-  # % of ties who don't eat a healthy diet 
-  diet <- x %>% select(name1diet:name15diet) 
-  diet$sum  <- length(which(diet == 0))
-  diet_prop <- percent(diet$sum / (nrow(mat) - 1))
+  # % of ties who don't eat a healthy diet
+  diet_prop <-  prop_calculator(alter_chunk$diet, c("No"))
   
-  #%of ties with health conditions 
-  health  <- x %>% select(name1health___1:name15health___99)
-  #Removes answers of no health problems and unknown
-  health <- health[, !grepl("___99", names(health))]
-  health <- health[, !grepl("___0", names(health))]
+  # %of ties with health conditions
+  healthprob_prop <- prop_calculator(alter_chunk[grepl("^health", colnames(alter_chunk))],
+                                     c("General Health", "Pain",
+                                       "Cognitive/Mental Health", "Cardiac"))
   
-  healthprob_prop <- checkbox_prop_maker(health)
+  ###### Table Construction and Assignment ######
   
-  #Format all percents into a table
-  table <- data.frame(size, density, kin_prop, diet_prop, exer_prop, alcohol_prop,
-                      healthprob_prop)
+  #Format all percents into a table, these
+  table_output <- data.frame(size, Density_1, kin_prop, diet_prop, exer_prop,
+                      alcohol_prop, healthprob_prop)
   #Transposes dataframe to verticle orientation
-  table <- t(table)
+  table_output <- t(table_output)
   #Names each row of the data table
-  rownames(table) <- c("Size of your network", "Density of ties in your network",
+  rownames(table_output) <- c("Size of your network", "Density of ties in your network",
                        "Percent who are family", "Percent who don't eat a healthy diet", 
                        "Percent who don't exercise regularly",
                        "Percent who heavily drink alcohol",
                        "Percent who have health problems")
-  #Eliminates names of the table columns
-  colnames(table) <- ""
-  #Prints the table
-  table <- print(table, quote = FALSE)
-  #Table formattting
-  table <- data.frame('Social Network Characteristics' = row.names(table), table)
-  table <- as.data.frame(table)
-  table <- table %>% select(Social.Network.Characteristics, V1)
+  #Prints the table_output
+  table_output <- data.frame('Social Network Characteristics' = row.names(table_output), table_output)
+  #Rounding table values
+  table_output$table_output <- round(table_output$table_output, digits = 4)
+  #Percentage-ing our proportions
+  table_output$table_output[c(-1,-2)] <- percentage(table_output$table_output[c(-1,-2)])
   #Table labeling
-  colnames(table) <- c("Social Network Characteristics", "Your Network")
+  colnames(table_output) <- c("Social Network Characteristics", "Your Network")
   
-  return(table)
   
-} 
-
+  return(table_output)
+  
+}
 
 #Creates a series of pdf documents containing the network graph
-for(i in c(1:nrow(dataset))){
-  #Isolates a single row from the dataset into variable input. Used in many fxns
-  input <- dataset[i, ]
-  #Checks to see if row in dataset has at least 3 ties, if not it skips the row
+for(i in c(1:nrow(sample_data))){
+  #Isolates a single row from the sample_data into variable input. Used in many fxns
+  input <- sample_data[i, ]
+  #Checks to see if row in sample_data has at least 3 ties, if not it skips the row
   if (rowSums(select(input, tie1:tie15), na.rm = TRUE) < 3) { 
     next
   }
@@ -460,7 +461,7 @@ margin = theme(plot.margin = unit(c(1, 1, 1, 1), "mm"))
 pdf(file = "Social Network Grid.pdf", width = 11, height = 7)
 
 #Determines organisation of network graphs on grid and prints them
-grid.arrange(grobs = lapply(make_net_array(dataset), "+", margin),
-             ncol = ceiling(sqrt(dim(dataset)[1])))
+grid.arrange(grobs = lapply(make_net_array(sample_data), "+", margin),
+             ncol = ceiling(sqrt(dim(sample_data)[1])))
 #Closes pdf file
 dev.off()

@@ -18,16 +18,23 @@
 #Empties Global Environment cache
 rm(list = ls())
 
+#Importing packages. If not yet installed, packages can be installed by going to:
+#  Tools -> Install Packages, then enter their exact names from within each library()
+#  Otherwise this set of code should automatically install the required packages.
+
+ifelse("tidyverse" %in% rownames(installed.packages()), "installed", install.packages("tidyverse"))
+ifelse("rstudioapi" %in% rownames(installed.packages()), "installed", install.packages("rstudioapi"))
+
+library(tidyverse)
+library(rstudioapi)  
+
 #Set working directory to current file location
+#This code should already work, but if not do this:
 #To set to own working directory
 #  select "Session->Set Working Directory->To Source File Location"
 #  then copy result in console into current "setwd("")".
-setwd("~/Desktop/PersonalNetworks-master")
-
-#Importing packages. If not yet installed, packages can be installed by going to:
-#  Tools -> Install Packages, then enter their exact names from within each
-#  library()
-library(tidyverse)
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#setwd("~/Desktop/PersonalNetworks-master")
 
 #Read in data
 #Imports data and assigns it to variable "sample_data"
@@ -422,3 +429,4 @@ alter_frame <- alter_frame[,!(names(alter_frame) %in% na_columns)]
 
 #Exporting data
 save(alter_frame, file = "alter_data.rda")
+
