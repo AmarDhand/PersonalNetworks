@@ -6,7 +6,7 @@ Project description: This is R code to process data from REDCap form on personal
 
 Contact information: Amar Dhand, adhand@bwh.harvard.edu
 
-File organization: Statistical code, example data, codebook, and README file all together in the main directory. Statistical code in 3 parts which should be used in sequence: cleandata1, cleandata2, datafeedback. An additional 2 code files are for extra data processing for analysts: alterdata, egodata.
+File organization: clean_data1 and clean_data2 are depricated versions of data analysis for PersNet data, they will function adequately however are limited in their ability to be modified. data_feedback is a code which constructs network graphs or sociograms from survey questions. ego_data is a code which processes data focused on the subject of the survey, as well as network statistics for their personal network. alter_data is a code which organises alter data into "tall" format for easier analysis. Example Functions finalizes basic analysis of ego and alter data into a single processed dataset, as well it provides tutorialization on the statistics and processes for analysing PersNet data.
 
 File naming: Files names include data last saved, project name, code/series function, and file type (20180807_PersonalNetworks_cleandata1_code.R)
 
